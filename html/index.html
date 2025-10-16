@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script src="./js/vue.global.js"></script>
+        <script src="./js/vuex.global.js"></script>
+        <link rel="stylesheet" href="./css/index.css" />
+        <script src="https://cdn.tailwindcss.com/3.3.5"></script>
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css" />
+        <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+        <script src="./js/util/progressbar.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+        <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.js" integrity="sha256-xH4q8N0pEzrZMaRmd7gQVcTZiFei+HfRTBPJ1OGXC0k=" crossorigin="anonymous"></script>
+        <title>Codem Inventory</title>
+    </head>
+
+    <body>
+        <div id="app">
+            <div class="w-full h-[100vh] relative">
+                <div class="w-full h-[22.5%] absolute bottom-0 flex flex-wrap content-start items-start justify-center">
+                    <div v-if="bottomMenu && bottomMenu.length > 0 " class="w-full h-[40%] flex items-center justify-center">
+                        <div v-for="(bottomdata, index) in bottomMenu" :key="bottomdata.id" :class="bottomdata.value.value" class="w-[5%] h-full relative ml-[0.5vw] flex items-center justify-center relative">
+                            <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{bottomdata.value.amount ? bottomdata.value.amount.toLocaleString() : ''}}</h2>
+                            </div>
+                            <img class="h-[60%]" :src="'./itemimages/'+bottomdata.value.image+''" alt="" />
+                            <div class="w-full h-[20%] absolute bottom-0 flex items-center justify-center" style="background: rgba(0, 0, 0, 0.52)">
+                                <h2 class="text-[0.5vw] font-normal font-['Gilroy-Bold']">{{bottomdata.value.text}}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <transition-group name="fade">
+                        <div v-if="hotBar && hotBar.open" class="w-full h-[45%] flex items-end justify-center">
+                            <div class="w-[27.5%] h-[85.5%] flex justify-between">
+                                <div v-for="(data,index) in 5" class="w-[18%] h-full relative" style="background: radial-gradient(78.26% 78.26% at 39.13% 39.13%, rgba(217, 217, 217, 0.61) 0%, rgba(115, 115, 115, 0.61) 100%); box-shadow: 0px 2px 13.100000381469727px black; border-radius: 0.4vw; border: 2px rgba(0, 0, 0, 0.44) solid">
+                                    <template v-if="hotBar.items[index]">
+                                        <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                            <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{hotBar.items[index].amount}}</h2>
+                                        </div>
+                                        <div class="w-full h-full flex items-center justify-center">
+                                            <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+hotBar.items[index].image+''" alt="" />
+                                        </div>
+                                    </template>
+                                    <div class="w-[25%] h-[25%] top-0 left-0 absolute flex items-center justify-center" style="border-radius: 0.4vw 0; background-color: white">
+                                        <h2 class="text-black text-[0.6vw] font-normal font-['Gilroy-Medium'] leading-3">{{data}}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </transition-group>
+                </div>
+                <div class="w-full h-[100vh] relative" v-show="show">
+                    <div v-if="craftingPage" class="w-full h-full absolute z-[200] flex flex-wrap content-start items-start justify-center">
+                        <div class="w-[66.5%] h-[88.5%] flex items-end">
+                            <div class="w-full h-[87%] flex" style="background-image: url(/html/templateimages/craftbackground.png); background-size: 100% 100%">
+                                <div class="w-[46.3%] h-full flex justify-end">
+                                    <div class="w-[87.8%] h-full">
+                                        <div class="w-full h-[13%] flex items-end">
+                                            <div class="w-full h-[34%] flex items-center">
+                                                <div class="w-[7%] h-full">
+                                                    <img class="w-full h-full" src="/html/templateimages/svg/blueprintsicon.svg" alt="" />
+                                                </div>
+                                                <h2 class="text-[#4894FF] text-[0.85vw] ml-[0.8vw] font-normal font-['Gilroy-Black']">{{locales['BLUEPRINTS']}}</h2>
+                                            </div>
+                                        </div>
+                                        <div class="w-full h-[62%] flex items-end">
+                                            <div id="craftingscroll" class="w-full rounded-[1vw] h-[96.5%] bg-blue-500 bg-opacity-5 flex flex-wrap content-start overflow-auto border border-blue-500 border-opacity-10">
+                                                <div v-for="data in craftingItems" @click="selectedCraftingItem(data)" :class="craftingItem.name == data.name ? 'selectedcraft' : ''" class="craft-item-hover w-[46%] h-[30%] mt-[1.2vh] ml-[0.55vw] border border-blue-500 bg-[#3388FF54] rounded-[1vw] opacity-60">
+                                                    <div class="w-full h-full flex items-center justify-center relative">
+                                                        <div class="w-full h-[25%] absolute bottom-0 flex items-center justify-center">
+                                                            <h2 class="text-white text-[0.7vw] font-normal font-['Gilroy-Bold']">{{data.label}}</h2>
+                                                        </div>
+                                                        <img class="h-[50%]" style="object-fit: fill" :src="'/html/itemimages/'+data.image+'.png'" alt="" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="w-full h-[17%] flex items-end">
+                                            <div class="w-[99%] h-[82%] rounded-[1vw] flex border border-blue-500 border-opacity-10 bg-blue-500 bg-opacity-5">
+                                                <div class="w-[11%] h-full flex justify-end">
+                                                    <div class="w-[74%] h-[51.6%] flex items-end">
+                                                        <div class="w-full h-[75%]">
+                                                            <img class="w-full h-full" src="/html/templateimages/svg/craftinfo.svg" alt="" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="w-[89%] h-full flex flex-col justify-center">
+                                                    <h2 class="ml-[1vw] text-white text-[0.8vw] font-normal font-['Gilroy-Bold']">{{locales['CRAFTINFORMATION']}}</h2>
+                                                    <h2 class="ml-[1vw] text-white text-opacity-50 text-sm font-normal font-['Gilroy-Bold']">{{locales['CRAFTTEXT']}}</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="w-[8.5%] h-full flex items-center justify-center">
+                                    <div class="w-[60%] h-[22.3%] rounded-[2vw]"></div>
+                                </div>
+                                <div class="w-[39.9%] h-full">
+                                    <div class="w-full h-[13%] flex items-end">
+                                        <div class="w-full h-[34%] flex items-center">
+                                            <div class="w-[7%] h-full">
+                                                <img class="w-full h-full" src="/html/templateimages/svg/crafttableicon.svg" alt="" />
+                                            </div>
+                                            <h2 class="text-[#4894FF] text-[0.85vw] ml-[0.8vw] font-normal font-['Gilroy-Black']">{{locales['CRAFTTABLE']}}</h2>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[28%] flex items-end">
+                                        <div class="w-full h-[90%] flex rounded-[1vw] flex-wrap border border-blue-500 border-opacity-10 bg-blue-500 bg-opacity-5">
+                                            <div v-for="index in 10" class="w-[18%] ml-[0.4vw] mt-[0.4vh] h-[45%] rounded-[1vw]">
+                                                <template v-if="craftingItem && craftingItem.requiredItems[index - 1]">
+                                                    <div class="w-full h-full">
+                                                        <div :class="GetInventoryCraftCount(craftingItem.requiredItems[index - 1].name) < craftingItem.requiredItems[index - 1].amount ? 'bg-[#FF333342] border border-red-500 border-opacity-10' : 'bg-[#3388FF0D] border border-blue-500 border-opacity-10 ' " class="w-full h-full flex relative items-center justify-center rounded-[1vw]">
+                                                            <div class="w-full h-[25%] absolute top-0 flex items-center justify-center">
+                                                                <h2 class="text-white text-opacity-50 text-[0.6vw] font-normal font-['Gilroy-Medium']">
+                                                                    {{craftingItem.requiredItems[index - 1].amount}} (
+                                                                    <span :class="GetInventoryCraftCount(craftingItem.requiredItems[index - 1].name) < craftingItem.requiredItems[index - 1].amount ? 'text-[#FF3333F0]' : 'text-white' ">{{GetInventoryCraftCount(craftingItem.requiredItems[index - 1].name)}}</span>
+                                                                    )
+                                                                </h2>
+                                                            </div>
+                                                            <div class="w-full h-[25%] absolute bottom-0 flex items-center justify-center">
+                                                                <h2 class="text-white text-opacity-50 text-[0.6vw] font-normal font-['Gilroy-Medium']">{{craftingItem.requiredItems[index - 1].label}}</h2>
+                                                            </div>
+                                                            <img class="h-[50%]" :src="'/html/itemimages/'+craftingItem.requiredItems[index - 1].name+'.png'" alt="" />
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="w-full h-full" style="background-image: url('./templateimages/craftemptyslot.png'); background-size: 100% 100%"></div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[35.5%] flex items-end">
+                                        <div class="w-full h-[96%]">
+                                            <div class="w-full h-full flex items-center justify-center relative" style="background-image: url(/html/templateimages/craftbackground2.png); background-size: 100% 100%">
+                                                <div class="w-full h-[16%] top-0 absolute flex items-end">
+                                                    <!-- <h2 style="line-height: 100%" class="text-white ml-[1.5vw] text-[0.7vw] font-normal font-['Gilroy-Bold']">You can craft 1x Ap Pistol!</h2> -->
+                                                </div>
+                                                <img class="h-[40%]" :src="'/html/itemimages/'+waitingCraftItem.image+'.png'" alt="" />
+                                                <div class="w-full h-[18%] bottom-0 absolute flex justify-end">
+                                                    <div class="w-[80%] h-[68.9%] flex items-center justify-end">
+                                                        <!-- <h2 class="text-white text-[0.7vw] mr-[0.7vw] font-normal font-['Gilroy-Medium']">Auto craft with possible materials.</h2> -->
+                                                    </div>
+                                                    <div class="w-[9.4%] h-[68.9%]"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[15.5%] flex items-end">
+                                        <div class="w-full h-[90%]">
+                                            <div v-if="craftingItem && !startCraft" class="w-full h-full rounded-[1vw] bg-gradient-to-l from-blue-400 to-blue-700 flex items-center justify-center cursor-pointer" @click="craftItem">
+                                                <h2 class="text-white text-[1.3vw] font-normal font-['Gilroy-Bold']">{{locales['CRAFTITEM']}}</h2>
+                                            </div>
+                                            <div v-if="waitingCraftItem && startCraft" class="w-full h-full rounded-[1vw] relative" style="background-image: url(/html/templateimages/craftbutton.png); background-size: 100% 100%">
+                                                <div class="w-full h-full flex items-center justify-center absolute z-[5]" @click="finishCraftItem">
+                                                    <h2 class="text-white text-[1.3vw] font-normal font-['Gilroy-Bold'] absolute">{{countdown>0 ? formatTime(countdown) : locales['ITEMREADY']}}</h2>
+                                                </div>
+                                                <div :style="{ width: progressWidth + '%' }" class="h-full rounded-[1vw] relative bg-gradient-to-l from-blue-400 to-blue-700 flex items-center justify-center cursor-pointer"></div>
+                                            </div>
+                                            <!-- <h2 class="text-white text-[1.3vw] font-normal font-['Gilroy-Bold']">{{formatTime(countdown)}}</h2> -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="w-[66.5%] h-[5%] mt-[0.7vh] flex items-center justify-center">
+                            <div class="w-[17%] h-full bg-[#FF333340] flex rounded-[0.5vw]">
+                                <div class="w-[30%] h-full flex items-center justify-center">
+                                    <img class="h-[70%]" src="/html/templateimages/craftcloseicon.png" alt="" />
+                                </div>
+                                <div class="w-[70%] h-full flex items-center justify-center cursor-pointer" @click="closeCrafting">
+                                    <h2 class="text-red-500 mr-[1vw] text-[0.8vw] font-normal font-['Gilroy-Bold']">{{locales['CLOSECRAFTING']}}</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <transition-group name="settingsmodal">
+                        <div v-if="openSettingsPage" class="w-[15.7%] h-full absolute z-[5]" :class="layout == 1 ? 'right-[0]' : 'right-[-1.5vw]'">
+                            <div class="w-[78%] h-full">
+                                <div class="w-full h-[19.5%]"></div>
+                                <div class="w-full h-[77%]" style="background-image: url(./templateimages/Settings_Panel.png); background-size: 100% 100%">
+                                    <div class="w-full h-[8.2%] flex items-center justify-center">
+                                        <h2 class="text-white text-[0.8vw] font-normal font-['Gilroy-Black'] leading-3">{{locales['LAYOUT']}}</h2>
+                                    </div>
+                                    <div class="w-full h-[20%] flex flex-wrap content-start items-start justify-center">
+                                        <div class="w-[80%] h-[65%] mt-[1.5vh]" @click="changeLayout(1)">
+                                            <img src="./templateimages/layout1.png" class="w-full h-full" alt="" />
+                                        </div>
+                                        <div class="w-[80%] h-[28%] flex items-center justify-center">
+                                            <div class="w-full h-full flex items-center flex items-center justify-center rounded">
+                                                <input @click="changeLayout(1)" id="bordered-radio-2" type="radio" value="1" v-model="layout" name="bordered-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[18.5%] flex flex-wrap content-start items-start justify-center">
+                                        <div class="w-[80%] h-[65% ]" @click="changeLayout(2)">
+                                            <img src="./templateimages/layout2.png" class="w-full h-full" alt="" />
+                                        </div>
+                                        <div class="w-[80%] h-[28%] flex items-center justify-center">
+                                            <div class="w-full h-full flex items-center flex items-center justify-center rounded">
+                                                <input @click="changeLayout(2)" id="bordered-radio-2" type="radio" value="2" v-model="layout" name="bordered-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[10%]">
+                                        <div class="w-full h-[20%] flex items-center justify-center flex items-center justify-center">
+                                            <h2 class="text-white text-[0.7vw] font-normal font-['Gilroy-Black'] leading-3">{{locales['THEMA']}}</h2>
+                                        </div>
+                                        <div class="w-full h-[44%] flex items-center justify-center">
+                                            <div class="w-[50%] h-[7.5%] flex">
+                                                <div class="w-[3%] h-full bg-white"></div>
+                                                <div class="flex-1 h-[80%] bg-zinc-300 bg-opacity-20"></div>
+                                                <div class="w-[3%] h-full bg-white"></div>
+                                            </div>
+                                        </div>
+                                        <div class="w-full h-[36%] flex items-center justify-center">
+                                            <div class="w-[80%] h-full flex justify-between">
+                                                <div v-for="data in themaColor" @click="changeThema(data.name)" :style="{'background-color' : data.color}" class="w-[15%] h-full rounded-full"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[9%]">
+                                        <div class="w-full h-[65%] flex items-center justify-center">
+                                            <h2 class="text-white text-[0.7vw] font-normal font-['Gilroy-Black'] leading-3">{{locales['ADJUSTMENT']}}</h2>
+                                        </div>
+                                        <div class="w-full h-[15%] flex items-center justify-center">
+                                            <div class="w-[50%] h-[30%] flex">
+                                                <div class="w-[3%] h-full bg-white"></div>
+                                                <div class="flex-1 h-[80%] bg-zinc-300 bg-opacity-20"></div>
+                                                <div class="w-[3%] h-full bg-white"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[23%] flex items-center justify-center">
+                                        <div class="w-[75%] h-full flex flex-col justify-between">
+                                            <div v-for="data in adjustmentsData" class="w-full flex h-[16.5%] bg-zinc-300 bg-opacity-5 rounded-[3px]">
+                                                <div class="w-[70%] h-full flex items-center">
+                                                    <h2 class="text-white text-[0.65vw] ml-[0.3vw] font-normal font-['Gilroy-Black']" style="text-transform: uppercase">{{data.label}}</h2>
+                                                </div>
+                                                <div class="w-[30%] h-full relative flex items-center justify-center">
+                                                    <label class="inline-flex items-center cursor-pointer">
+                                                        <input type="checkbox" value="" class="sr-only peer" @click="changeAdjustment(data.name, data.value)" v-model="data.value" />
+                                                        <div class="relative w-[1.85vw] h-[1.8vh] bg-gray-200 rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[0.1vh] after:start-[2px] after:bg-green-400 after:border-gray-300 after:rounded-full after:h-[0.9vw] after:w-[0.9vw] after:transition-all dark:border-gray-600 peer-checked:bg-green-200"></div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[5%] flex items-center justify-center">
+                                        <div class="w-[50%] h-[7.5%] flex">
+                                            <div class="w-[3%] h-full bg-white"></div>
+                                            <div class="flex-1 h-[80%] bg-zinc-300 bg-opacity-20"></div>
+                                            <div class="w-[3%] h-full bg-white"></div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[6%] flex cursor-pointer items-center justify-center" @click="openSettingsModal(false)">
+                                        <h2 class="text-red-500 text-[0.8vw] font-normal font-['Gilroy-Bold']">{{locales['MINIMIZE']}}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </transition-group>
+                    <!-- :style="{backgroundImage: 'url(./templateimages/'+lights+'.png)'}" -->
+                    <div v-if="layout == 1" class="w-full h-full flex items-center justify-center" :style="{backgroundImage: 'url(./templateimages/'+lights+'.png)'}" style="background-size: 100% 100%">
+                        <div class="w-[94.5%] h-[95.5%]" @click="closeContextMenu()">
+                            <div class="w-full h-[5.8%] flex">
+                                <div class="w-[40.8%] h-full flex">
+                                    <div class="inline-flex flex flex-col justify-center h-full">
+                                        <h2 :class="currentThema+'text'" class="ml-[0.65vw] text-[1.4vw] font-normal font-['Gilroy-Black'] leading-7 tracking-wide">{{locales['INVENTORY']}}</h2>
+                                        <h2 class="ml-[0.65vw] text-white text-[0.55vw] font-normal font-['Gilroy-SemiBold'] leading-[9.95px]">{{locales['OFYOURCHARACTER']}}</h2>
+                                    </div>
+                                    <div class="flex-1 h-full w-full flex items-center justify-end">
+                                        <div class="w-[93%] h-[10%] bg-[url('./templateimages/divider.png')] bg-[length:100%_100%]"></div>
+                                    </div>
+                                </div>
+                                <div class="w-[18.55%] h-full flex items-center justify-center">
+                                    <div class="w-[60%] h-full relative">
+                                        <img class="w-full h-full absolute" src="./templateimages/logo.png" alt="" />
+                                        <div class="w-full h-[75%] flex absolute mt-[0.5vh]">
+                                            <div class="w-[25%] h-full flex items-center justify-center">
+                                                <img class="w-[70%] h-[70%]" :src="serverlogo" alt="" />
+                                            </div>
+                                            <div class="w-[75%] h-full flex items-center justify-start">
+                                                <h2 :class="currentThema+'text'" style="letter-spacing: 0.1vw" class="text-[1vw] ml-[0.3vw] font-normal font-['Gilroy-Black']">{{locales['ROLEPLAY']}}</h2>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="w-[40%] h-full flex">
+                                    <div class="flex-1 h-full w-full flex items-center justify-end">
+                                        <div class="w-[100%] h-[10%] bg-[url('./templateimages/divider.png')] bg-[length:100%_100%]"></div>
+                                    </div>
+                                    <div class="w-[22%] h-full flex items-center justify-end">
+                                        <div class="w-[55%] h-[60%] flex flex-wrap items-center justify-center">
+                                            <h2 class="text-white text-xs font-normal font-['Gilroy-SemiBold'] leading-3" style="line-height: 98%">{{locales['EXITFROM']}}</h2>
+                                            <h2 class="text-white text-xs font-normal font-['Gilroy-SemiBold'] leading-3" style="line-height: 98%">{{locales['INVENTORY2']}}</h2>
+                                        </div>
+                                        <div class="w-[34%] h-[60%] bg-rose-600 rounded-[5px] shadow flex items-center justify-center">
+                                            <h2 class="text-red-950 text-[0.7vw] font-normal font-['Gilroy-SemiBold'] leading-3">ESC</h2>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full h-[82%] flex relative" style="overflow: hidden">
+                                <div class="w-[100%] h-[0.4%] flex absolute bottom-[-2vh]">
+                                    <div class="w-[0.2%] h-full bg-white"></div>
+                                    <div class="flex-1 h-[80%] bg-zinc-300 bg-opacity-20"></div>
+                                    <div class="w-[0.2%] h-full bg-white"></div>
+                                </div>
+                                <div class="w-[140%] h-[105%] absolute bodyinventory overflow-auto"></div>
+                                <div class="w-[29%] h-full">
+                                    <div class="w-full h-[14.2%] flex flex-wrap content-end items-end">
+                                        <div class="w-full h-[43.5%] flex items-start justify-center">
+                                            <div class="w-[97%] h-[80%] flex">
+                                                <div class="w-[8%] h-full">
+                                                    <!-- <inlinesvg
+                                                        class="h-[100%] cursor-pointer w-[100%] flex items-center justify-center"
+                                                        src="./templateimages/svg/template1playericon.svg"
+                                                    ></inlinesvg> -->
+                                                    <img class="w-full h-full" :src="'./templateimages/svg/'+currentThema+'playericon.svg'" alt="" />
+                                                </div>
+                                                <div class="w-[34%] h-[84%] flex items-center justify-start">
+                                                    <h2 :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">{{locales['PLAYER']}}</h2>
+                                                </div>
+                                                <div class="w-[18.5%] h-[84%] flex items-center justify-center">
+                                                    <h2 class="text-white text-[0.55vw] font-normal font-['Gilroy-SemiBold']">
+                                                        {{PlayerInventoryWeight}}/
+                                                        <span class="text-white text-[0.68vw] font-normal font-['Gilroy-SemiBold']">{{maxWeight}} Kg</span>
+                                                    </h2>
+                                                </div>
+                                                <div class="w-[38%] h-[85%] flex justify-between">
+                                                    <div class="w-[80%] h-full bg-zinc-300 bg-opacity-5 rounded">
+                                                        <div class="w-[80%] h-full relative z-[4]">
+                                                            <input type="text" placeholder="Search..." class="w-full h-full text-white text-[0.6vw] font-normal font-['Gilroy-Bold'] indent-[0.5vw]" style="border: none; outline: none; background-color: transparent" v-model="searchInventoryItem" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="w-[18%] relative z-[104] h-full cursor-pointer flex items-center justify-center bg-zinc-300 bg-opacity-5 rounded" @click="sortItem">
+                                                        <img class="w-[50%] h-[50%] flex items-center justify-center" src="./templateimages/svg/sorticon.svg" alt="" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="w-full h-[26%] flex items-center justify-start">
+                                            <div class="w-[96.5%] ml-[0.3vw] h-full flex justify-between">
+                                                <div v-for="data in Category" @click="filterItem(data.name)" :class="data.name === filterCategoryName ? ''+currentThema+'background' : 'bg-zinc-300 bg-opacity-5' " class="w-[19%] flex items-center z-[2] cursor-pointer justify-center h-full rounded">
+                                                    <h2 :class="data.name === filterCategoryName ? 'text-[#421B00 ]' : 'text-white' " class="text-[0.6vw] font-normal font-['Gilroy-SemiBold'] leading-[10.94px]">{{data.label}}</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[86%] flex flex-wrap overflow-auto content-start" id="layout1">
+                                        <!-- <div v-if="hoverMenuItem" class="w-[22%] inline-flex rounded-[0.15vw] z-[1000] flex justify-between bg-[#0D0B1E]" style="position: absolute" :style="{top : hoverMenuItem.position.y + 'px', left : hoverMenuItem.position.x + 'px'}">
+                                            <div class="w-[20%] h-full flex items-center justify-end borderred">
+                                                <div class="w-[80%] h-[70%] bg-zinc-300 flex items-center justify-center bg-opacity-20 rounded-[0.15vw]">
+                                                    <img class="h-[70%]" style="object-fit: cover" :src="'./itemimages/'+hoverMenuItem.item.image+''" alt="" />
+                                                </div>
+                                            </div>
+                                            <div class="w-[78%] h-full">
+                                                <div class="w-[95%] h-[35%] flex items-end justify-between">
+                                                    <h2 class="text-white text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">{{hoverMenuItem.item.label}}</h2>
+                                                    <h2 class="text-white text-xs font-normal font-['Gilroy-SemiBold']">{{(hoverMenuItem.item.amount * hoverMenuItem.item.weight) / 1000}}kg x{{hoverMenuItem.item.amount}}</h2>
+                                                </div>
+                                                <div class="w-[95%] h-[55%] flex items-center">
+                                                    <h2 class="text-white text-opacity-20 text-[13px] font-normal font-['Gilroy-SemiBold'] leading-[12.93px]">{{hoverMenuItem.item.description}}</h2>
+                                                </div>
+                                            </div>
+                                            <div class="w-full h-[15%]">
+                                                <h2 class="text-white t">Bıorderrererer</h2>
+                                            </div>
+                                        </div> -->
+                                        <div v-if="showContextMenu" class="absolute w-[13%] inline-flex flex flex-col z-[1000] rounded-[0.3vw]" style="background: linear-gradient(203deg, #3b3b3b 0%, #000 98.82%)" :style="{top : menuPosition.y + 'px', left : menuPosition.x + 'px'}">
+                                            <div v-if="contextMenuValue == 'main'" v-for="(data,index) in contextMenuDataComputed" @mouseover="contextmenuIndex = index" @mouseleave="contextmenuIndex = -1" @click.stop="handleContextMenuClick(data)" class="w-full h-[15%] p-[0.3vw] flex cursor-pointer flex items-center justify-center">
+                                                <!-- <h2
+                                                :class="contextmenuIndex === index ? 'text-[#421B00 ]' : 'text-white' "
+                                                class="text-base font-normal font-['Gilroy-Black'] leading-none"
+                                                style="text-transform: uppercase"
+                                            >
+                                                {{data.label}}
+                                            </h2> -->
+                                                <div class="w-full h-full flex cursor-pointer p-[0.5vw] rounded-[0.4vw] flex items-center justify-center" :class="contextmenuIndex === index ? currentThema+'durabilitybar': '' ">
+                                                    <div class="w-[15%] h-full flex items-center justify-center">
+                                                        <img class="w-[80%] h-[80%]" :src="'./templateimages/svg/'+data.icon+'.svg'" alt="" />
+                                                    </div>
+                                                    <div class="w-[85%] h-full">
+                                                        <h2 :class="contextmenuIndex === index ? 'text-[#421B00 ]' : 'text-white' " class="text-base font-normal font-['Gilroy-Black'] leading-none" style="text-transform: uppercase">{{data.label}}</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div v-if="contextMenuValue == 'split' && contextMenuItem" @click.stop="" class="w-full h-[15%] p-[0vw] cursor-pointer">
+                                                <div class="w-full h-[15%] flex items-center p-[0.5vw] justify-center">
+                                                    <div class="w-[80%] h-full flex items-center">
+                                                        <h2 class="text-white text-base font-normal font-['Gilroy-Black']">{{locales['SPLITITEM']}}</h2>
+                                                    </div>
+                                                    <div class="w-[20%] h-full flex items-center justify-center"></div>
+                                                </div>
+                                                <div class="w-full h-[5%] borderrred flex items-center justify-center">
+                                                    <h2 class="text-white text-base font-normal font-['Gilroy-Black']">{{splitAmount.toLocaleString()}}x</h2>
+                                                </div>
+                                                <div class="w-full h-[15%] p-[0.5vw]">
+                                                    <div class="w-[100%] h-full flex items-center justify-center">
+                                                        <input class="w-full h-full" type="range" :min="1" :max="contextMenuItem.amount - 1" v-model="splitAmount" id="slider" />
+                                                    </div>
+                                                </div>
+                                                <div class="w-[100] h-[25%] flex">
+                                                    <div @mouseover="contextmenuIndex = 0" @mouseleave="contextmenuIndex = -1" class="w-[100%] p-[0.5vw] h-full flex justify-center items-center cursor-pointer" @click="itemSplit(contextMenuItem, splitAmount)" :class="contextmenuIndex == 0 ? currentThema+'durabilitybar' : ''">
+                                                        <h2 :class="contextmenuIndex == 0 ? 'opacity-100' : 'opacity-50'" class="text-white text-base font-normal font-['Gilroy-Black']">{{locales['CONFIRM']}}</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div v-if="contextMenuValue == 'give'" @click.stop="" class="w-full h-[15%] p-[0.8vw] cursor-pointer">
+                                                <div class="w-full h-[15%] flex items-center">
+                                                    <div class="w-[80%] h-full flex flex-col items-start justify-start">
+                                                        <h2 class="text-white text-base font-normal font-['Gilroy-Black']">{{locales['GIVEITEM']}} x{{contextMenuItem.amount}}</h2>
+                                                    </div>
+                                                    <div class="w-[20%] h-full flex items-center justify-center">
+                                                        <div class="w-[80%] h-[100%] p-[0.5vw]"></div>
+                                                    </div>
+                                                </div>
+                                                <div v-for="data in closestPlayers" @click="GiveItemToNearbyPlayers(data.id, contextMenuItem)" class="w-full h-[15%] cursor-pointer mt-[1vh] flex items-center justify-center">
+                                                    <div class="w-[80%] h-full">
+                                                        <h2 class="text-white text-base font-normal font-['Gilroy-Black']">{{data.name}} - {{data.id}}</h2>
+                                                    </div>
+                                                    <div class="w-[20%] h-full flex items-center justify-center">
+                                                        <inlinesvg class="h-[100%] cursor-pointer w-[100%] flex items-center justify-center" src="./templateimages/svg/sendicon.svg"></inlinesvg>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div v-if="contextMenuValue == 'info'" @click.stop="" class="w-full h-[15%] p-[0.6vw] cursor-pointer">
+                                                <div class="w-full h-[20%] flex items-center">
+                                                    <div class="w-[15%] h-full flex items-center justify-center">
+                                                        <img class="w-[80%] h-[80%]" src="./templateimages/svg/infoiconlarge.svg" alt="" />
+                                                    </div>
+                                                    <div class="w-[85%] h-full flex items-center">
+                                                        <h2 class="text-white text-[0.8vw] font-normal font-['Gilroy-Black'] leading-none">{{contextMenuItem.label}}</h2>
+                                                    </div>
+                                                </div>
+                                                <div class="w-full mt-[1vh] h-[15%] cursor-pointer flex items-center justify-center">
+                                                    <div class="w-full inlineflex">
+                                                        <h2 v-for="(data) in GetInfoData()" class="text-white pl-[0.4vw] mt-[1vh] text-[0.8vw] font-normal font-['Gilroy-SemiBold'] leading-none">{{data.label}} : {{data.value}}</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div v-if="contextMenuValue == 'attachment'" @click.stop="" class="w-full h-[15%] p-[0.6vw] cursor-pointer">
+                                                <div class="w-full h-[20%] flex items-center">
+                                                    <div class="w-[100%] h-full flex items-center">
+                                                        <h2 class="text-white text-[0.8vw] font-normal font-['Gilroy-Black'] leading-none">{{locales['ATTACHMENT']}}</h2>
+                                                    </div>
+                                                </div>
+                                                <div v-for="(attachment, index) in contextMenuItem.info.attachments" @click="removeAttachment(contextMenuItem, attachment)" class="w-full mt-[1vh] h-[15%] cursor-pointer flex items-center justify-center">
+                                                    <div class="w-[80%] h-full">
+                                                        <h2 class="text-white text-base font-normal font-['Gilroy-Black']">{{ attachment.label }}</h2>
+                                                    </div>
+                                                    <div class="w-[20%] h-full flex items-center justify-center">
+                                                        <img class="h-[100%]" src="./templateimages/svg/attachmentremove.svg" alt="" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div v-for="index in maxSlot" @contextmenu.prevent="handleRightClick( $event, inventoryItemsArray[index], false )" @dblclick="handleDoubleClickItem(inventoryItemsArray[index])" @mouseleave="handleMouseLeaveHoverItem()" @mouseover="handleMouseOverHoverItem($event, inventoryItemsArray[index] ? inventoryItemsArray[index] : null)" :data-slotnumber="index" :data-item="JSON.stringify(inventoryItemsArray[index] ? inventoryItemsArray[index] : null)" class="main-inventory-slot main-inventory-slot-drop w-[18.5%] ml-[0.3vw] flex items-center justify-center relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                            <template v-if="inventoryItemsArray[index]">
+                                                <div v-if="inventoryItemsArray[index].info" class="w-[15%] h-[15%] left-[0.2vw] bottom-[1vh] absolute">
+                                                    <img class="w-full h-full" src="./templateimages/svg/infoicon.svg" alt="" />
+                                                </div>
+                                                <div v-if="GetWeaponAttachIcon(inventoryItemsArray[index])" class="w-[15%] h-[15%] right-[0.3vw] bottom-[1vh] absolute">
+                                                    <img class="w-full h-full" src="./templateimages/svg/attachmenticon.svg" alt="" />
+                                                </div>
+
+                                                <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                    <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{inventoryItemsArray[index].amount.toLocaleString()}}</h2>
+                                                </div>
+                                                <div class="w-full h-full flex items-center justify-center">
+                                                    <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+inventoryItemsArray[index].image+''" alt="" />
+                                                </div>
+                                                <div v-if="inventoryItemsArray[index].info && inventoryItemsArray[index].info.quality" :class="currentThema+'durabilitybaropacity'" class="w-full h-[7%] bottom-0 absolute" style="border-top-right-radius: 0px; border-bottom-right-radius: 3px; border-top-left-radius: 0px; border-bottom-left-radius: 0px">
+                                                    <div :class="currentThema+'durabilitybar'" :style="{width : inventoryItemsArray[index].info.quality + '%'}" class="h-full" style="border-top-left-radius: 0px; border-top-right-radius: 0px; border-bottom-left-radius: 3px; border-bottom-right-radius: 0px"></div>
+                                                </div>
+                                            </template>
+                                            <div v-if="GetSlotNumberContainer(index)" class="w-[25%] h-[25%] top-0 left-0 absolute flex items-center justify-center" style="border-radius: 0.4vw 0; background-color: white">
+                                                <h2 class="text-black text-[0.9vw] font-normal font-['Gilroy-Medium'] leading-3">{{index }}</h2>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="w-[30%] h-full">
+                                    <div class="w-full h-[14.2%] flex flex-wrap content-end items-end">
+                                        <div class="w-full h-[43.5%] flex items-start justify-center">
+                                            <div class="w-[90%] h-[80%] flex">
+                                                <div class="w-[8%] h-full">
+                                                    <img v-if="rightinventory == 'ground'" :src="'./templateimages/svg/'+currentThema+'groundicon.svg'" alt="" />
+                                                    <img v-if="rightinventory == 'vehicle' || rightinventory == 'glovebox'" :src="'./templateimages/svg/'+currentThema+'trunkicon.svg'" alt="" />
+                                                    <img v-if="rightinventory == 'stash'" :src="'./templateimages/svg/'+currentThema+'stashicon.svg'" alt="" />
+                                                    <img v-if="rightinventory == 'backpack'" :src="'./templateimages/svg/'+currentThema+'backpackicon.svg'" alt="" />
+                                                    <img v-if="rightinventory == 'shop'" :src="'./templateimages/svg/'+currentThema+'shopicon.svg'" alt="" />
+                                                    <img v-if="rightinventory == 'player'" :src="'./templateimages/svg/'+currentThema+'playericon.svg'" alt="" />
+                                                </div>
+                                                <div class="w-[50%] h-full flex items-center justify-start">
+                                                    <h2 v-if="rightinventory == 'ground'" :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">
+                                                        {{locales['GROUND']}}
+                                                        <span v-if="rightInventoryData && rightInventoryData.id">#{{rightInventoryData.id}}</span>
+                                                    </h2>
+                                                    <h2 v-if="rightinventory == 'stash'" :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">
+                                                        <span v-if="rightInventoryData && rightInventoryData.label">{{rightInventoryData.label}}</span>
+                                                        {{locales['STASH']}}
+                                                    </h2>
+                                                    <h2 v-if="rightinventory == 'backpack'" :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">
+                                                        <span v-if="rightInventoryData && rightInventoryData.slot">{{locales['BACKPACKSTASH']}}</span>
+                                                    </h2>
+                                                    <h2 v-if="rightinventory == 'vehicle' || rightinventory == 'glovebox'" :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">
+                                                        <span style="text-transform: uppercase" v-if="rightInventoryData && rightInventoryData.plate">{{ rightInventoryData.plate }} {{ rightinventory == 'glovebox' ? locales['GLOVEBOX'] : locales['TRUNK'] }}</span>
+                                                    </h2>
+                                                    <h2 v-if="rightinventory == 'shop'" :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">
+                                                        <span style="text-transform: uppercase" v-if="rightInventoryData && rightInventoryData.shoplabel">{{rightInventoryData.shoplabel ? rightInventoryData.shoplabel : locales['SHOP']}}</span>
+                                                    </h2>
+                                                    <h2 v-if="rightinventory == 'player'" :class="currentThema+'text'" class="ml-[1vw] text-[0.8vw] font-normal font-['Gilroy-Black'] leading-none">
+                                                        <span style="text-transform: uppercase" v-if="rightInventoryData && rightInventoryData.playername">{{ rightInventoryData.playername ? rightInventoryData.playername + ' ' + locales['INVENTORY'] : 'UNKNOWN' }}</span>
+                                                    </h2>
+                                                </div>
+                                                <div class="w-[44%] h-full flex items-center justify-end relative">
+                                                    <div class="w-[18%] absolute z-[104] left-[6vw] h-full cursor-pointer flex items-center justify-center bg-zinc-300 bg-opacity-5 rounded" @click="sortItemStash">
+                                                        <img class="w-[50%] h-[50%] flex items-center justify-center" src="./templateimages/svg/sorticon.svg" alt="" />
+                                                    </div>
+                                                    <h2 v-if="rightinventory == 'stash'" class="text-white mr-[-1.25vw] text-[0.6vw] font-normal font-['Gilroy-SemiBold'] leading-[9.95px]">
+                                                        {{rightInventoryWeight}} /
+                                                        <span class="text-white text-[0.7vw] font-normal font-['Gilroy-SemiBold'] leading-3" v-if="rightInventoryData && rightInventoryData.maxweight">{{rightInventoryData.maxweight / 1000}}Kg</span>
+                                                    </h2>
+                                                    <h2 v-if="rightinventory == 'vehicle' || rightinventory == 'glovebox'" class="text-white mr-[-1.25vw] text-[0.6vw] font-normal font-['Gilroy-SemiBold'] leading-[9.95px]">
+                                                        {{rightInventoryWeight}} /
+                                                        <span class="text-white text-[0.7vw] font-normal font-['Gilroy-SemiBold'] leading-3" v-if="rightInventoryData && rightInventoryData.maxweight">{{rightInventoryData.maxweight / 1000}}Kg</span>
+                                                    </h2>
+
+                                                    <h2 v-if="rightinventory == 'backpack'" class="text-white mr-[-1.25vw] text-[0.6vw] font-normal font-['Gilroy-SemiBold'] leading-[9.95px]">
+                                                        {{rightInventoryWeight}} /
+                                                        <span class="text-white text-[0.7vw] font-normal font-['Gilroy-SemiBold'] leading-3" v-if="rightInventoryData && rightInventoryData.maxweight">{{rightInventoryData.maxweight / 1000}}Kg</span>
+                                                    </h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="w-full h-[26%]">
+                                            <div v-if="rightinventory == 'shop'" class="w-full h-full flex justify-between">
+                                                <div class="w-[25%] ml-[1.4vw] relative flex items-center z-[50] cursor-pointer bg-zinc-300 bg-opacity-5 justify-center h-full rounded">
+                                                    <input type="text" placeholder="Choose Amount" class="w-full h-full text-white text-[0.6vw] font-normal font-['Gilroy-Bold'] indent-[0.5vw]" style="border: none; outline: none; background-color: transparent" v-model="shopAmount" @input="checkInputMin" />
+                                                </div>
+                                                <div class="w-[40%] h-full flex">
+                                                    <div class="w-[40%] h-full flex items-center relative z-[105] justify-center rounded-[0.3vw] cursor-pointer" @click="changePaymentMethod('cash')" :class="paymentMethod == 'cash' ?  currentThema+'durabilitybar' : ''">
+                                                        <h2 :class="currentThema == 'white' && paymentMethod == 'cash' ? 'text-black' : 'text-white '" class="text-[0.6vw] font-normal font-['Gilroy-SemiBold']">Cash</h2>
+                                                    </div>
+                                                    <div class="w-[40%] h-full flex items-center relative z-[105] justify-center rounded-[0.3vw] cursor-pointer" @click="changePaymentMethod('bank')" :class="paymentMethod == 'bank' ?  currentThema+'durabilitybar' : ''">
+                                                        <h2 :class="currentThema == 'white' && paymentMethod == 'bank' ? 'text-black' : 'text-white '" class="text-[0.6vw] font-normal font-['Gilroy-SemiBold']">Bank</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[86%] flex justify-end">
+                                        <div class="w-[97%] h-full flex flex-wrap content-start overflow-auto items-start content-start" id="layout1">
+                                            <div v-if="hoverMenuItem" class="w-[22%] h-[11%] rounded-[0.15vw] z-[1000] flex justify-between bg-[#0D0B1E]" style="position: absolute" :style="{top : hoverMenuItem.position.y + 'px', left : hoverMenuItem.position.x + 'px'}">
+                                                <div class="w-[20%] h-full flex items-center justify-end">
+                                                    <div class="w-[80%] h-[70%] bg-zinc-300 flex items-center justify-center bg-opacity-20 rounded-[0.15vw]">
+                                                        <img class="h-[70%]" style="object-fit: cover" :src="'./itemimages/'+hoverMenuItem.item.image+''" alt="" />
+                                                    </div>
+                                                </div>
+                                                <div class="w-[78%] h-full">
+                                                    <div class="w-[95%] h-[35%] flex items-end justify-between">
+                                                        <h2 class="text-white text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">{{hoverMenuItem.item.label}}</h2>
+                                                        <h2 class="text-white text-xs font-normal font-['Gilroy-SemiBold']">{{(hoverMenuItem.item.amount * hoverMenuItem.item.weight) / 1000}}kg x{{hoverMenuItem.item.amount}}</h2>
+                                                    </div>
+                                                    <div class="w-[95%] h-[55%] flex items-center">
+                                                        <h2 class="text-white text-opacity-20 text-[13px] font-normal font-['Gilroy-SemiBold'] leading-[12.93px]">{{hoverMenuItem.item.description}}</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div v-if="showInfoValue" class="w-[22%] inlineflex bg-[#0D0B1E] pb-[0.5vw] rounded-[0.15vw] z-[1000]" style="position: absolute" :style="{top : showInfoValue.position.y + 'px', left : showInfoValue.position.x + 'px'}">
+                                                <h2 v-for="(data) in GetInfoDataItem(showInfoValue.item)" class="text-white pl-[0.4vw] mt-[1vh] text-[0.8vw] font-normal font-['Gilroy-SemiBold'] leading-none">{{data.label}} : {{data.value}}</h2>
+                                            </div>
+
+                                            <div v-if="rightinventory == 'ground'" v-for="index in groundslot" :data-slotnumber="index" :data-item=" JSON.stringify(rightinventoryItems[index] ? rightinventoryItems[index] : null)" @mouseover="handleMouseOverHoverItem($event, rightinventoryItems[index] ? rightinventoryItems[index] : null)" @mouseleave="handleMouseLeaveHoverItem()" class="w-[18.5%] ml-[0.3vw] flex items-center cursor-pointer justify-center ground-inventory-drag-slot ground-inventory-drop-slot relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                                <template v-if="rightinventoryItems[index]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{rightinventoryItems[index].amount}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightinventoryItems[index].image+''" alt="" />
+                                                    </div>
+                                                </template>
+                                            </div>
+
+                                            <div v-if="rightinventory == 'stash' && rightInventoryData && rightInventoryData.slot" v-for="index in rightInventoryData.slot" :data-slotnumber="index" :data-item=" JSON.stringify(rightinventoryItems[index] ? rightinventoryItems[index] : null)" @contextmenu.prevent="handleRightClick( $event, rightinventoryItems[index], 'stash' )" @mouseover="handleMouseOverHoverItem($event, rightinventoryItems[index] ? rightinventoryItems[index] : null)" @mouseleave="handleMouseLeaveHoverItem()" class="w-[18.5%] ml-[0.3vw] flex items-center cursor-pointer justify-center stash-inventory-drag-slot stash-inventory-drop-slot relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                                <template v-if="rightinventoryItems[index]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{rightinventoryItems[index].amount}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightinventoryItems[index].image+''" alt="" />
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div v-if="rightinventory == 'vehicle' && rightInventoryData && rightInventoryData.slot" v-for="index in rightInventoryData.slot" :data-slotnumber="index" :data-item=" JSON.stringify(rightinventoryItems[index] ? rightinventoryItems[index] : null)" @contextmenu.prevent="handleRightClick( $event, rightinventoryItems[index], 'trunk' )" @mouseover="handleMouseOverHoverItem($event, rightinventoryItems[index] ? rightinventoryItems[index] : null)" @mouseleave="handleMouseLeaveHoverItem()" class="w-[18.5%] ml-[0.3vw] flex items-center cursor-pointer justify-center trunk-inventory-drag-slot trunk-inventory-drop-slot relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                                <template v-if="rightinventoryItems[index]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{rightinventoryItems[index].amount}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightinventoryItems[index].image+''" alt="" />
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div v-if="rightinventory == 'glovebox' && rightInventoryData && rightInventoryData.slot" v-for="index in rightInventoryData.slot" :data-slotnumber="index" @contextmenu.prevent="handleRightClick( $event, rightinventoryItems[index], 'glovebox' )" :data-item=" JSON.stringify(rightinventoryItems[index] ? rightinventoryItems[index] : null)" @mouseover="handleMouseOverHoverItem($event, rightinventoryItems[index] ? rightinventoryItems[index] : null)" @mouseleave="handleMouseLeaveHoverItem()" class="w-[18.5%] ml-[0.3vw] flex items-center cursor-pointer justify-center glovebox-inventory-drag-slot glovebox-inventory-drop-slot relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                                <template v-if="rightinventoryItems[index]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{rightinventoryItems[index].amount}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightinventoryItems[index].image+''" alt="" />
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div v-if="rightinventory == 'shop' && rightInventoryData" v-for="(data , index ,key) in Object.values(rightInventoryData.inventory)" :data-item=" JSON.stringify(rightInventoryData.inventory[index + 1] ? rightInventoryData.inventory[index + 1] : null)" @mouseleave="handleMouseLeaveHoverItem()" @mouseover="handleMouseOverHoverItem($event, rightInventoryData.inventory[index + 1] ? rightInventoryData.inventory[index + 1] : null)" class="w-[18.5%] ml-[0.3vw] flex items-center cursor-pointer justify-center shop-inventory-drag-slot relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(78.26% 78.26% at 39.13% 39.13%, rgba(51, 255, 125.8, 0.2) 0%, rgba(51, 255, 125.8, 0.2) 100%)">
+                                                <template v-if="rightInventoryData.inventory[index + 1]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-[#33FF7E] text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium']">$ {{rightInventoryData.inventory[index + 1].price}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightInventoryData.inventory[index + 1].image+''" alt="" />
+                                                    </div>
+                                                    <div class="w-full h-[20%] absolute bottom-0 bg-white bg-opacity-10 flex items-center justify-center">
+                                                        <h2 class="text-white text-[0.6vw] font-normal font-['Gilroy-Medium']" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{rightInventoryData.inventory[index + 1].label}}</h2>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div v-if="rightinventory == 'backpack' && rightInventoryData && rightInventoryData.slot" v-for="(data , index) in rightInventoryData.slot" :data-slotnumber="index" :data-item=" JSON.stringify(rightInventoryData.inventory[index + 1 ] ? rightInventoryData.inventory[index + 1] : null)" @mouseleave="handleMouseLeaveHoverItem()" @mouseover="handleMouseOverHoverItem($event, rightInventoryData.inventory[index + 1] ? rightInventoryData.inventory[index + 1] : null)" class="w-[18.5%] ml-[0.3vw] flex items-center cursor-pointer justify-center backpack-inventory-drag-drop backpack-inventory-drag-slot relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                                <template v-if="rightInventoryData.inventory[index + 1]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium']">x{{rightInventoryData.inventory[index + 1 ].amount}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightInventoryData.inventory[index + 1].name+'.png'" alt="" />
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div v-if="rightinventory == 'player' " v-for="index in maxSlot" :data-slotnumber="index" :data-item="JSON.stringify(rightinventoryItems[index] ? rightinventoryItems[index] : null)" @mouseleave="handleMouseLeaveHoverItem()" @mouseover="handleMouseOverHoverItem($event, rightinventoryItems[index]  ? rightinventoryItems[index]  : null)" class="rob-player-inventory-slot rob-player-inventory-slot-drop w-[18.5%] ml-[0.3vw] flex items-center justify-center relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                                <template v-if="rightinventoryItems[index]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{rightinventoryItems[index].amount.toLocaleString()}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightinventoryItems[index].image+''" alt="" />
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="w-[25.5%] h-full">
+                                    <div class="w-full h-[12.5%] flex items-end justify-center">
+                                        <div class="w-[53%] h-[60%] flex justify-end relative">
+                                            <div class="w-[94%] h-full flex flex-col relative justify-start items-center">
+                                                <h2 class="text-white text-base font-normal font-['Gilroy-Black'] leading-none">{{locales['PLAYERINFO']}}</h2>
+                                            </div>
+                                            <div class="w-full h-[20%] absolute bottom-0 flex items-end justify-center">
+                                                <div class="w-full h-[100%] flex items-center justify-center">
+                                                    <div class="w-[100%] h-[25%] flex">
+                                                        <div class="w-[2%] h-full bg-white"></div>
+                                                        <div class="flex-1 h-[80%] bg-zinc-300 bg-opacity-20"></div>
+                                                        <div class="w-[2%] h-full bg-white"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[78%] flex justify-end">
+                                        <div class="w-[32%] flex flex-col h-full">
+                                            <div class="w-full h-[11%] flex items-end justify-center">
+                                                <div class="w-full h-[15%] flex items-center justify-center">
+                                                    <div class="w-[100%] h-[7.5%] flex">
+                                                        <div class="w-[2%] h-full bg-white"></div>
+                                                        <div class="flex-1 h-[80%] bg-zinc-300 bg-opacity-20"></div>
+                                                        <div class="w-[2%] h-full bg-white"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="w-full h-[10%] flex items-center justify-start">
+                                                <div class="relative w-[28%] h-[80%] flex items-center justify-center" id="health">
+                                                    <img class="absolute" class="h-[50%]" src="./templateimages/svg/health-icon.svg" />
+                                                </div>
+                                                <div class="flex flex-col ml-[0.5vw]">
+                                                    <h1 class="text-red-500 text-[0.75vw] font-normal font-['Gilroy-Black'] leading-3">{{locales['HEALTH']}}</h1>
+                                                    <p class="text-white text-[0.7vw] mt-[0.5vh] font-normal font-['Gilroy-SemiBold'] leading-3">{{status.health}}%</p>
+                                                </div>
+                                            </div>
+                                            <div class="w-full h-[10%] flex items-center justify-start">
+                                                <div class="relative w-[28%] h-[80%] flex items-center justify-center" id="armor">
+                                                    <img class="absolute" class="h-[40%]" src="./templateimages/svg/armor-icon.svg" />
+                                                </div>
+                                                <div class="flex flex-col ml-[0.5vw]">
+                                                    <h1 class="text-blue-500 text-[0.75vw] font-normal font-['Gilroy-Black'] leading-3">{{locales['ARMOR']}}</h1>
+                                                    <p class="text-white text-[0.7vw] mt-[0.5vh] font-normal font-['Gilroy-SemiBold'] leading-3">{{status.armor}}%</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="w-full h-[10%] flex items-center justify-start">
+                                                <div class="relative w-[28%] h-[80%] flex items-center justify-center" id="hunger">
+                                                    <img class="absolute" class="h-[40%]" src="./templateimages/svg/hunger-icon.svg" />
+                                                </div>
+                                                <div class="flex flex-col ml-[0.5vw]">
+                                                    <h1 class="text-orange-400 text-[0.75vw] font-normal font-['Gilroy-Black'] leading-3">{{locales['HUNGER']}}</h1>
+                                                    <p class="text-white text-[0.7vw] mt-[0.5vh] font-normal font-['Gilroy-SemiBold'] leading-3">{{status.hunger ? status.hunger.toFixed(0) : 0}}%</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="w-full h-[10%] flex items-center justify-start">
+                                                <div class="relative w-[28%] h-[80%] flex items-center justify-center" id="thirst">
+                                                    <img class="absolute" class="h-[40%]" src="./templateimages/svg/thirst-icon.svg" />
+                                                </div>
+                                                <div class="flex flex-col ml-[0.5vw]">
+                                                    <h1 class="text-cyan-300 text-[0.75vw] font-normal font-['Gilroy-Black'] leading-3">{{locales['THIRST']}}</h1>
+                                                    <p class="text-white text-[0.7vw] mt-[0.5vh] font-normal font-['Gilroy-SemiBold'] leading-3">{{status.thirst ? status.thirst.toFixed(0) : 0}}%</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="w-full h-[10%] flex items-center justify-start">
+                                                <div class="relative w-[28%] h-[80%] flex items-center justify-center" id="stamina">
+                                                    <img class="absolute" class="h-[40%]" src="./templateimages/svg/stamina-icon.svg" />
+                                                </div>
+                                                <div class="flex flex-col ml-[0.5vw]">
+                                                    <h1 class="text-lime-300 text-[0.75vw] font-normal font-['Gilroy-Black'] leading-3">{{locales['STAMINA']}}</h1>
+                                                    <p class="text-white text-[0.7vw] mt-[0.5vh] font-normal font-['Gilroy-SemiBold'] leading-3">{{status.stamina ? status.stamina.toFixed(0) : 0}}%</p>
+                                                </div>
+                                            </div>
+                                            <div class="w-full h-[4%] flex items-end justify-center">
+                                                <div class="w-full h-[100%] flex items-center justify-center">
+                                                    <div class="w-[100%] h-[7.5%] flex">
+                                                        <div class="w-[2%] h-full bg-white"></div>
+                                                        <div class="flex-1 h-[80%] bg-zinc-300 bg-opacity-20"></div>
+                                                        <div class="w-[2%] h-full bg-white"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div v-if="!cashitem" class="w-full h-[10%] flex items-center justify-start">
+                                                <div class="relative w-[28%] h-[80%] flex items-center justify-center" id="cash">
+                                                    <img class="absolute" class="h-[40%]" src="./templateimages/svg/cash-icon.svg" />
+                                                </div>
+                                                <div class="flex flex-col ml-[0.5vw]">
+                                                    <h1 class="text-lime-300 text-[0.75vw] font-normal font-['Gilroy-Black'] leading-3">{{locales['CASH']}}</h1>
+                                                    <p class="text-white text-[0.7vw] mt-[0.5vh] font-normal font-['Gilroy-SemiBold'] leading-3">{{status.cash}} $</p>
+                                                </div>
+                                            </div>
+                                            <div class="w-full h-[10%] flex items-center justify-start">
+                                                <div class="relative w-[28%] h-[80%] flex items-center justify-center" id="bank">
+                                                    <img class="absolute" class="h-[40%]" src="./templateimages/svg/bank-icon.svg" />
+                                                </div>
+                                                <div class="flex flex-col ml-[0.5vw]">
+                                                    <h1 class="text-white text-[0.75vw] font-normal font-['Gilroy-Black'] leading-3">{{locales['BANK']}}</h1>
+                                                    <p class="text-white text-[0.7vw] mt-[0.5vh] font-normal font-['Gilroy-SemiBold'] leading-3">{{status.bank}} $</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="w-full h-[4%] flex items-end justify-center">
+                                                <div class="w-full h-[100%] flex items-center justify-center">
+                                                    <div class="w-[100%] h-[7.5%] flex">
+                                                        <div class="w-[2%] h-full bg-white"></div>
+                                                        <div class="flex-1 h-[80%] bg-zinc-300 bg-opacity-20"></div>
+                                                        <div class="w-[2%] h-full bg-white"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="w-full h-[10%] flex items-center justify-start">
+                                                <div class="relative w-[28%] h-[80%] flex items-center justify-center" id="weight">
+                                                    <img class="absolute" class="h-[40%]" src="./templateimages/svg/weight-icon.svg" />
+                                                </div>
+                                                <div class="flex flex-col ml-[0.5vw]">
+                                                    <h1 class="text-white text-[0.75vw] font-normal font-['Gilroy-Black'] leading-3">{{locales['WEIGHT']}}</h1>
+                                                    <p class="text-white text-[0.7vw] mt-[0.5vh] font-normal font-['Gilroy-SemiBold'] leading-3">{{this.PlayerInventoryWeight}}/{{this.maxWeight}} Kg</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[9.5%] flex items-center justify-end">
+                                        <div class="w-[95%] h-full" style="background: rgba(217, 217, 217, 0.08); border-radius: 4px">
+                                            <div class="w-full h-full flex">
+                                                <div class="w-[57%] h-full">
+                                                    <div class="w-[90%] ml-[1vw] h-full">
+                                                        <div class="w-full h-[42%] flex items-end">
+                                                            <div class="w-full h-[70%] flex items-center">
+                                                                <div class="w-[12%] h-full">
+                                                                    <img class="w-full h-full" src="./templateimages/svg/idcard.svg" alt="" />
+                                                                </div>
+                                                                <h2 class="ml-[0.5vw] text-right text-white text-base font-normal font-['Gilroy-Black'] leading-none">{{playerInfo.name}}</h2>
+                                                            </div>
+                                                        </div>
+                                                        <div class="w-full h-[50%] flex items-end">
+                                                            <div class="w-full h-[70%] flex items-center text-white text-base font-normal font-['Gilroy-SemiBold'] leading-none">ID - #{{playerInfo.id}}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="w-[43%] h-full">
+                                                    <div class="w-[100%] h-full">
+                                                        <div class="w-full h-[42%] flex items-end">
+                                                            <div class="w-full h-[70%] flex items-center">
+                                                                <div class="w-[12%] h-full">
+                                                                    <img class="w-full h-full" src="./templateimages/svg/jobcard.svg" alt="" />
+                                                                </div>
+                                                                <h2 class="ml-[0.5vw] text-right text-white text-base font-normal font-['Gilroy-Black'] leading-none">{{locales['JOBFACTION']}}</h2>
+                                                            </div>
+                                                        </div>
+                                                        <div class="w-full h-[50%] flex items-end">
+                                                            <div class="w-full h-[70%] flex items-center text-[#8985BF] text-base font-normal font-['Gilroy-SemiBold'] leading-none">{{playerInfo.job}} - {{playerInfo.jobgrade}}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="w-[15.5%] h-full flex justify-end">
+                                    <div class="w-[93%] h-full flex items-center justify-center">
+                                        <div v-if="ClothingMenu()" class="w-[90%] h-full">
+                                            <div class="w-full h-[12%] flex items-center relative justify-center relative">
+                                                <div class="w-full h-[5%] absolute bottom-0 flex items-end justify-center">
+                                                    <div class="w-full h-[100%] flex items-center justify-center">
+                                                        <div class="w-[100%] h-[60%] flex">
+                                                            <div class="w-[2%] h-full bg-white"></div>
+                                                            <div class="flex-1 h-[80%] bg-zinc-300 bg-opacity-20"></div>
+                                                            <div class="w-[2%] h-full bg-white"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <h2 class="text-white text-[1vw] font-normal font-['Gilroy-Black'] leading-none" style="text-transform: uppercase">{{locales['CLOTHES']}}</h2>
+                                            </div>
+                                            <!-- v-if="!openSettingsPage && configClothing" -->
+                                            <div class="w-full h-[88%] relative z-[111] flex items-center justify-between flex-wrap">
+                                                <div v-if="!configClothing" v-for="data in clothesIconData" @click="SetClothes(data.name)" :key="data.name" class="w-[45%] h-[12%] bg-zinc-300 bg-opacity-20 rounded-[3px]">
+                                                    <inlinesvg class="h-[100%] cursor-pointer w-[100%] flex items-center justify-center" :src="'./templateimages/svg/'+data.icon+'.svg'"></inlinesvg>
+                                                </div>
+                                                <div v-if="configClothing" v-for="(data,index) in clothesIconData" :key="data.name" class="w-[45%] relative z-[105] cursor-pointer h-[12%] clothes-slot-drag clothes-slot-drop bg-zinc-300 bg-opacity-20 rounded-[3px]" :data-item="JSON.stringify(ClothingInventory[data.itemname] ? ClothingInventory[data.itemname] : null)" @dblclick="takeoffclothes(ClothingInventory[data.itemname] ? ClothingInventory[data.itemname] : null)">
+                                                    <template v-if="ClothingInventory[data.itemname]">
+                                                        <div class="w-full h-full flex items-center justify-center">
+                                                            <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+ClothingInventory[data.itemname].image+''" alt="" />
+                                                        </div>
+                                                    </template>
+                                                    <div v-else class="w-full h-full">
+                                                        <inlinesvg class="h-[100%] cursor-pointer w-[100%] flex items-center justify-center" :src="'./templateimages/svg/'+data.icon+'.svg'"></inlinesvg>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full h-[12.5%] flex">
+                                <div class="w-[28%] h-full flex items-end justify-end">
+                                    <transition-group name="fade">
+                                        <div v-if="infoonbottomvalue && infoonbottomItem" class="w-[98.5%] h-[80%] flex bg-zinc-300 justify-between bg-opacity-10 rounded">
+                                            <div class="w-[20%] h-full flex items-center justify-end">
+                                                <div class="w-[80%] h-[80%] bg-zinc-300 flex items-center justify-center bg-opacity-20 rounded-[0.15vw]">
+                                                    <img class="h-[70%]" style="object-fit: cover" :src="'./itemimages/'+infoonbottomItem.item.image+''" alt="" />
+                                                </div>
+                                            </div>
+                                            <div class="w-[78%] h-full">
+                                                <div class="w-[95%] h-[35%] flex items-end justify-between">
+                                                    <h2 class="text-white text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">{{infoonbottomItem.item.label}}</h2>
+                                                    <h2 class="text-white text-xs font-normal font-['Gilroy-SemiBold']">{{(infoonbottomItem.item.amount * infoonbottomItem.item.weight) / 1000}}kg x{{infoonbottomItem.item.amount}}</h2>
+                                                </div>
+                                                <div class="w-[95%] h-[55%] flex items-center">
+                                                    <h2 class="text-white text-opacity-20 text-[13px] font-normal font-['Gilroy-SemiBold'] leading-[12.93px]">{{infoonbottomItem.item.description}}</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </transition-group>
+                                </div>
+                                <div class="w-[58.5%] h-full flex items-end justify-start">
+                                    <div class="w-[51.5%] h-[80%] flex items-end justify-end relative">
+                                        <div class="w-[93%] h-full relative">
+                                            <transition-group name="fade">
+                                                <div v-if="notifications.length > 0" v-for="(notification, index) in notifications" :key="notification.id" :style="{'bottom': `${0 + (index * 10)}vh`}" class="w-full h-full absolute bg-zinc-300 bg-opacity-10 rounded">
+                                                    <div class="w-full h-[35%] flex items-end">
+                                                        <h2 class="text-white ml-[0.5vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">{{locales['NOTIFICATION']}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-[65%] flex items-center justify-center">
+                                                        <div class="w-[96%] h-full flex items-center">
+                                                            <h2 class="text-white text-opacity-20 text-[0.7vw] font-normal font-['Gilroy-SemiBold'] leading-[12.93px]">{{ notification.text }}</h2>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </transition-group>
+                                        </div>
+                                        <!-- <div class="w-[93%] h-full absolute">
+                                            <transition-group name="fade">
+                                                <div
+                                                    v-if="contextMenuItem && contextMenuItem.info && contextMenuItem.info.attachments"
+                                                    class="w-full h-full flex"
+                                                    style="background: rgba(217, 217, 217, 0.08); border-radius: 4px"
+                                                >
+                                                    <div class="w-[64%] ml-[0.7vw] h-full flex items-center justify-between">
+                                                        <div
+                                                            v-for="n in 4"
+                                                            :key="n"
+                                                            class="w-[23%] h-[70%] flex items-center justify-center"
+                                                            style="background: rgba(217, 217, 217, 0.19); border-radius: 3px"
+                                                        >
+                                                            <div
+                                                                v-if="contextMenuItem.info.attachments[n-1]"
+                                                                class="w-full h-full flex items-center justify-center"
+                                                            >
+                                                                <img
+                                                                    class="h-[60%]"
+                                                                    :src="'./itemimages/'+contextMenuItem.info.attachments[n-1].itemname+'.png'"
+                                                                    alt=""
+                                                                />
+                                                            </div>
+                                                            <div v-else class="w-full h-full flex items-center justify-center">
+                                                                <img class="h-[50%]" src="./templateimages/svg/+icon.svg" alt="" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="w-[8.5%] h-full borderred"></div>
+                                                    <div class="w-[21%] h-full borderred flex items-center justify-center">
+                                                        <div class="w-full h-[45%] borderred"></div>
+                                                    </div>
+                                                </div>
+                                            </transition-group>
+                                        </div> -->
+                                    </div>
+                                </div>
+                                <div class="w-[12.8%] h-full">
+                                    <div v-if="allowedCraft" class="w-full h-[32%] mt-[1.2vh] bg-zinc-300 bg-opacity-20 rounded flex items-center justify-center cursor-pointer" @click="OpenCraftPage">
+                                        <h2 class="text-white text-[0.8vw] font-normal font-['Gilroy-Bold'] leading-[13.93px]">{{locales['CRAFTBUTTON']}}</h2>
+                                    </div>
+                                    <div @click="openSettingsModal(true)" class="w-full h-[32%] mt-[1.3vh] bg-zinc-300 bg-opacity-20 rounded flex items-center justify-center">
+                                        <h2 class="text-white text-[0.8vw] font-normal font-['Gilroy-Bold'] leading-[13.93px]">{{locales['SETTINGS']}}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- layout2 -->
+                    <div v-if="layout == 2" class="w-full h-full flex items-center justify-center" @click="closeContextMenu()" :style="{backgroundImage: 'url(./templateimages/'+lights+'.png)'}" style="background-size: 100% 100%">
+                        <div class="w-[93%] h-[95%]">
+                            <div class="w-full h-[5%] flex">
+                                <div class="w-[40.8%] h-full flex">
+                                    <div class="inline-flex flex flex-col justify-center h-full">
+                                        <h2 :class="currentThema+'text'" class="ml-[0.65vw] text-[1.4vw] font-normal font-['Gilroy-Black'] leading-7 tracking-wide">{{locales['INVENTORY']}}</h2>
+                                        <h2 class="ml-[0.65vw] text-white text-[0.55vw] font-normal font-['Gilroy-SemiBold'] leading-[9.95px]">{{locales['OFYOURCHARACTER']}}</h2>
+                                    </div>
+                                    <div class="flex-1 h-full w-full flex items-center justify-end">
+                                        <div class="w-[93%] h-[10%] bg-[url('./templateimages/divider.png')] bg-[length:100%_100%]"></div>
+                                    </div>
+                                </div>
+                                <div class="w-[18.55%] h-full flex items-center justify-center">
+                                    <div class="w-[60%] h-full relative">
+                                        <img class="w-full h-full absolute" src="./templateimages/logo.png" alt="" />
+                                        <div class="w-full h-[75%] flex absolute mt-[0.5vh]">
+                                            <div class="w-[25%] h-full flex items-center justify-center">
+                                                <img class="w-[70%] h-[70%]" :src="serverlogo" alt="" />
+                                            </div>
+                                            <div class="w-[75%] h-full flex items-center justify-start">
+                                                <h2 :class="currentThema+'text'" style="letter-spacing: 0.1vw" class="text-[1vw] ml-[0.3vw] font-normal font-['Gilroy-Black']">{{locales['ROLEPLAY']}}</h2>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="w-[40%] h-full flex">
+                                    <div class="flex-1 h-full w-full flex items-center justify-end">
+                                        <div class="w-[100%] h-[10%] bg-[url('./templateimages/divider.png')] bg-[length:100%_100%]"></div>
+                                    </div>
+                                    <div class="w-[22%] h-full flex items-center justify-end">
+                                        <div class="w-[55%] h-[60%] flex flex-wrap items-center justify-center">
+                                            <h2 class="text-white text-xs font-normal font-['Gilroy-SemiBold'] leading-3" style="line-height: 98%">{{locales['EXITFROM']}}</h2>
+                                            <h2 class="text-white text-xs font-normal font-['Gilroy-SemiBold'] leading-3" style="line-height: 98%">{{locales['INVENTORY2']}}</h2>
+                                        </div>
+                                        <div class="w-[34%] h-[60%] bg-rose-600 rounded-[5px] shadow flex items-center justify-center">
+                                            <h2 class="text-red-950 text-[0.7vw] font-normal font-['Gilroy-SemiBold'] leading-3">ESC</h2>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-[100%] h-[83%] flex relative">
+                                <div class="w-[100%] h-[0.4%] flex absolute bottom-[-2vh]">
+                                    <div class="w-[0.2%] h-full bg-white"></div>
+                                    <div class="flex-1 h-[80%] bg-zinc-300 bg-opacity-20"></div>
+                                    <div class="w-[0.2%] h-full bg-white"></div>
+                                </div>
+                                <div class="w-[105%] h-[105%] absolute bodyinventory overflow-auto"></div>
+                                <div class="w-[12.5%] h-full"></div>
+                                <div class="w-[29%] h-full">
+                                    <div class="w-full h-[14.2%] flex flex-wrap content-end items-end">
+                                        <div class="w-full h-[43.5%] flex items-start justify-center">
+                                            <div class="w-[97%] h-[80%] flex">
+                                                <div class="w-[8%] h-full">
+                                                    <img :src="'./templateimages/svg/'+currentThema+'groundicon.svg'" alt="" />
+                                                    <!-- <inlinesvg
+                                                        class="h-[100%] cursor-pointer w-[100%] flex items-center justify-center"
+                                                        :src="'./templateimages/svg/'+currentThema+'groundicon.svg'"
+                                                    ></inlinesvg> -->
+                                                </div>
+                                                <div class="w-[34%] h-[84%] flex items-center justify-start">
+                                                    <h2 :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">{{locales['PLAYER']}}</h2>
+                                                </div>
+                                                <div class="w-[18.5%] h-[84%] flex items-center justify-center">
+                                                    <h2 class="text-white text-[0.55vw] font-normal font-['Gilroy-SemiBold']">
+                                                        <h2 class="text-white text-[0.55vw] font-normal font-['Gilroy-SemiBold']">
+                                                            {{PlayerInventoryWeight}}/
+                                                            <span class="text-white text-[0.68vw] font-normal font-['Gilroy-SemiBold']">{{maxWeight}} Kg</span>
+                                                        </h2>
+                                                    </h2>
+                                                </div>
+                                                <div class="w-[38%] h-[85%] flex justify-between">
+                                                    <div class="w-[80%] h-full bg-zinc-300 bg-opacity-5 rounded">
+                                                        <div class="w-[80%] h-full relative z-[4]">
+                                                            <input type="text" placeholder="Search..." class="w-full h-full text-white text-[0.6vw] font-normal font-['Gilroy-Bold'] indent-[0.5vw]" style="border: none; outline: none; background-color: transparent" v-model="searchInventoryItem" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="w-[18%] relative z-[104] h-full cursor-pointer flex items-center justify-center bg-zinc-300 bg-opacity-5 rounded" @click="sortItem">
+                                                        <img class="w-[50%] h-[50%] flex items-center justify-center" src="./templateimages/svg/sorticon.svg" alt="" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="w-full h-[26%] flex items-center justify-start">
+                                            <div class="w-[96.5%] ml-[0.3vw] h-full flex justify-between">
+                                                <div v-for="data in Category" @click="filterItem(data.name)" :class="data.name === filterCategoryName ? ''+currentThema+'background' : 'bg-zinc-300 bg-opacity-5' " class="w-[19%] flex items-center z-[2] cursor-pointer justify-center h-full rounded">
+                                                    <h2 :class="data.name === filterCategoryName ? 'text-[#421B00 ]' : 'text-white' " class="text-[0.6vw] font-normal font-['Gilroy-SemiBold'] leading-[10.94px]">{{data.label}}</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[86%] flex flex-wrap overflow-auto items-start content-start" id="layout1">
+                                        <div v-if="hoverMenuItem" class="w-[22%] h-[11%] rounded-[0.15vw] z-[1000] flex justify-between bg-[#0D0B1E]" style="position: absolute" :style="{top : hoverMenuItem.position.y + 'px', left : hoverMenuItem.position.x + 'px'}">
+                                            <div class="w-[20%] h-full flex items-center justify-end">
+                                                <div class="w-[80%] h-[70%] bg-zinc-300 flex items-center justify-center bg-opacity-20 rounded-[0.15vw]">
+                                                    <img class="h-[70%]" style="object-fit: cover" :src="'./itemimages/'+hoverMenuItem.item.image+''" alt="" />
+                                                </div>
+                                            </div>
+                                            <div class="w-[78%] h-full">
+                                                <div class="w-[95%] h-[35%] flex items-end justify-between">
+                                                    <h2 class="text-white text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">{{hoverMenuItem.item.label}}</h2>
+                                                    <h2 class="text-white text-xs font-normal font-['Gilroy-SemiBold']">{{(hoverMenuItem.item.amount * hoverMenuItem.item.weight) / 1000}}kg x{{hoverMenuItem.item.amount}}</h2>
+                                                </div>
+                                                <div class="w-[95%] h-[55%] flex items-center">
+                                                    <h2 class="text-white text-opacity-20 text-[13px] font-normal font-['Gilroy-SemiBold'] leading-[12.93px]">{{hoverMenuItem.item.description}}</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div v-if="showContextMenu" class="absolute w-[13%] inline-flex flex flex-col z-[1000] rounded-[0.3vw]" style="background: linear-gradient(203deg, #3b3b3b 0%, #000 98.82%)" :style="{top : menuPosition.y + 'px', left : menuPosition.x + 'px'}">
+                                            <div v-if="contextMenuValue == 'main'" v-for="(data,index) in contextMenuDataComputed" @mouseover="contextmenuIndex = index" @mouseleave="contextmenuIndex = -1" @click.stop="handleContextMenuClick(data)" class="w-full h-[15%] p-[0.3vw] flex cursor-pointer flex items-center justify-center">
+                                                <!-- <h2
+                                                    :class="contextmenuIndex === index ? 'text-[#421B00 ]' : 'text-white' "
+                                                    class="text-base font-normal font-['Gilroy-Black'] leading-none"
+                                                    style="text-transform: uppercase"
+                                                >
+                                                    {{data.label}}
+                                                </h2> -->
+                                                <div class="w-full h-full flex cursor-pointer p-[0.5vw] rounded-[0.4vw] flex items-center justify-center" :class="contextmenuIndex === index ? currentThema+'durabilitybar': '' ">
+                                                    <div class="w-[15%] h-full flex items-center justify-center">
+                                                        <img class="w-[80%] h-[80%]" :src="'./templateimages/svg/'+data.icon+'.svg'" alt="" />
+                                                    </div>
+                                                    <div class="w-[85%] h-full">
+                                                        <h2 :class="contextmenuIndex === index ? 'text-[#421B00 ]' : 'text-white' " class="text-base font-normal font-['Gilroy-Black'] leading-none" style="text-transform: uppercase">{{data.label}}</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div v-if="contextMenuValue == 'split' && contextMenuItem" @click.stop="" class="w-full h-[15%] p-[0vw] cursor-pointer">
+                                                <div class="w-full h-[15%] flex items-center p-[0.5vw] justify-center">
+                                                    <div class="w-[80%] h-full flex items-center">
+                                                        <h2 class="text-white text-base font-normal font-['Gilroy-Black']">{{locales['SPLITITEM']}}</h2>
+                                                    </div>
+                                                    <div class="w-[20%] h-full flex items-center justify-center"></div>
+                                                </div>
+                                                <div class="w-full h-[5%] borderrred flex items-center justify-center">
+                                                    <h2 class="text-white text-base font-normal font-['Gilroy-Black']">{{splitAmount.toLocaleString()}}x</h2>
+                                                </div>
+                                                <div class="w-full h-[15%] p-[0.5vw]">
+                                                    <div class="w-[100%] h-full flex items-center justify-center">
+                                                        <input class="w-full h-full" type="range" :min="1" :max="contextMenuItem.amount - 1" v-model="splitAmount" id="slider" />
+                                                    </div>
+                                                </div>
+                                                <div class="w-[100] h-[25%] flex">
+                                                    <div @mouseover="contextmenuIndex = 0" @mouseleave="contextmenuIndex = -1" class="w-[100%] p-[0.5vw] h-full flex justify-center items-center cursor-pointer" @click="itemSplit(contextMenuItem, splitAmount)" :class="contextmenuIndex == 0 ? currentThema+'durabilitybar' : ''">
+                                                        <h2 :class="contextmenuIndex == 0 ? 'opacity-100' : 'opacity-50'" class="text-white text-base font-normal font-['Gilroy-Black']">{{locales['CONFIRM']}}</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div v-if="contextMenuValue == 'give'" @click.stop="" class="w-full h-[15%] p-[0.8vw] cursor-pointer">
+                                                <div class="w-full h-[15%] flex items-center">
+                                                    <div class="w-[80%] h-full flex flex-col items-start justify-start">
+                                                        <h2 class="text-white text-base font-normal font-['Gilroy-Black']">{{locales['GIVEITEM']}} x{{contextMenuItem.amount}}</h2>
+                                                    </div>
+                                                    <div class="w-[20%] h-full flex items-center justify-center">
+                                                        <div class="w-[80%] h-[100%] p-[0.5vw]"></div>
+                                                    </div>
+                                                </div>
+                                                <div v-for="data in closestPlayers" @click="GiveItemToNearbyPlayers(data.id, contextMenuItem)" class="w-full h-[15%] cursor-pointer mt-[1vh] flex items-center justify-center">
+                                                    <div class="w-[80%] h-full">
+                                                        <h2 class="text-white text-base font-normal font-['Gilroy-Black']">{{data.name}} - {{data.id}}</h2>
+                                                    </div>
+                                                    <div class="w-[20%] h-full flex items-center justify-center">
+                                                        <inlinesvg class="h-[100%] cursor-pointer w-[100%] flex items-center justify-center" src="./templateimages/svg/sendicon.svg"></inlinesvg>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div v-if="contextMenuValue == 'info'" @click.stop="" class="w-full h-[15%] p-[0.6vw] cursor-pointer">
+                                                <div class="w-full h-[20%] flex items-center">
+                                                    <div class="w-[15%] h-full flex items-center justify-center">
+                                                        <img class="w-[80%] h-[80%]" src="./templateimages/svg/infoiconlarge.svg" alt="" />
+                                                    </div>
+                                                    <div class="w-[85%] h-full flex items-center">
+                                                        <h2 class="text-white text-[0.8vw] font-normal font-['Gilroy-Black'] leading-none">{{contextMenuItem.label}}</h2>
+                                                    </div>
+                                                </div>
+                                                <div class="w-full mt-[1vh] h-[15%] cursor-pointer flex items-center justify-center">
+                                                    <div class="w-full inlineflex">
+                                                        <h2 v-for="(data) in GetInfoData()" class="text-white pl-[0.4vw] mt-[1vh] text-[0.8vw] font-normal font-['Gilroy-SemiBold'] leading-none">{{data.label}} : {{data.value}}</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div v-if="contextMenuValue == 'attachment'" @click.stop="" class="w-full h-[15%] p-[0.6vw] cursor-pointer">
+                                                <div class="w-full h-[20%] flex items-center">
+                                                    <div class="w-[100%] h-full flex items-center">
+                                                        <h2 class="text-white text-[0.8vw] font-normal font-['Gilroy-Black'] leading-none">{{locales['ATTACHMENT']}}</h2>
+                                                    </div>
+                                                </div>
+                                                <div v-for="(attachment, index) in contextMenuItem.info.attachments" @click="removeAttachment(contextMenuItem, attachment)" class="w-full mt-[1vh] h-[15%] cursor-pointer flex items-center justify-center">
+                                                    <div class="w-[80%] h-full">
+                                                        <h2 class="text-white text-base font-normal font-['Gilroy-Black']">{{ attachment.label }}</h2>
+                                                    </div>
+                                                    <div class="w-[20%] h-full flex items-center justify-center">
+                                                        <img class="h-[100%]" src="./templateimages/svg/attachmentremove.svg" alt="" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div v-for="index in maxSlot" @contextmenu.prevent="handleRightClick( $event, inventoryItemsArray[index], false )" @dblclick="handleDoubleClickItem(inventoryItemsArray[index])" @mouseleave="handleMouseLeaveHoverItem()" @mouseover="handleMouseOverHoverItem($event, inventoryItemsArray[index] ? inventoryItemsArray[index] : null)" :data-slotnumber="index" :data-item="JSON.stringify(inventoryItemsArray[index] ? inventoryItemsArray[index] : null)" class="main-inventory-slot main-inventory-slot-drop w-[18.5%] ml-[0.3vw] flex items-center justify-center relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                            <template v-if="inventoryItemsArray[index]">
+                                                <div v-if="inventoryItemsArray[index].info" class="w-[15%] h-[15%] left-[0.2vw] bottom-[1vh] absolute">
+                                                    <img class="w-full h-full" src="./templateimages/svg/infoicon.svg" alt="" />
+                                                </div>
+                                                <div v-if="GetWeaponAttachIcon(inventoryItemsArray[index])" class="w-[15%] h-[15%] right-[0.3vw] bottom-[1vh] absolute">
+                                                    <img class="w-full h-full" src="./templateimages/svg/attachmenticon.svg" alt="" />
+                                                </div>
+
+                                                <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                    <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{inventoryItemsArray[index].amount.toLocaleString()}}</h2>
+                                                </div>
+                                                <div class="w-full h-full flex items-center justify-center">
+                                                    <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+inventoryItemsArray[index].image+''" alt="" />
+                                                </div>
+                                                <div v-if="inventoryItemsArray[index].info && inventoryItemsArray[index].info.quality" :class="currentThema+'durabilitybaropacity'" class="w-full h-[7%] bottom-0 absolute" style="border-top-right-radius: 0px; border-bottom-right-radius: 3px; border-top-left-radius: 0px; border-bottom-left-radius: 0px">
+                                                    <div :class="currentThema+'durabilitybar'" :style="{width : inventoryItemsArray[index].info.quality + '%'}" class="h-full" style="border-top-left-radius: 0px; border-top-right-radius: 0px; border-bottom-left-radius: 3px; border-bottom-right-radius: 0px"></div>
+                                                </div>
+                                            </template>
+                                            <div v-if="GetSlotNumberContainer(index)" class="w-[25%] h-[25%] top-0 left-0 absolute flex items-center justify-center" style="border-radius: 0.4vw 0; background-color: white">
+                                                <h2 class="text-black text-[0.9vw] font-normal font-['Gilroy-Medium'] leading-3">{{index }}</h2>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="w-[17%] h-full">
+                                    <div class="w-full h-[26.5%] flex items-end justify-center">
+                                        <div class="w-[43%] h-[60%] flex relative items-start justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" version="1.1" x="0px" y="0px" viewBox="0 0 120 63">
+                                                <path d="M2.5 60.5C3.83333 41.3333 17.2 3 60 3C102.8 3 116.167 41.3333 117.5 60.5" stroke="#D9D9D9" stroke-opacity="0.18" stroke-width="5" stroke-linecap="round" />
+
+                                                <path id="slot-weight" d="M2.5 60.5C3.83333 41.3333 17.2 3 60 3C102.8 3 116.167 41.3333 117.5 60.5" stroke-width="5" stroke-linecap="round" />
+                                            </svg>
+                                            <div class="w-full h-full absolute">
+                                                <div class="w-[100%] h-[50%] flex items-end justify-center">
+                                                    <div class="w-[50%] h-[50%] flex items-center justify-center">
+                                                        <img :src="'./templateimages/svg/'+weighticon+'.svg'" alt="" />
+                                                    </div>
+                                                </div>
+                                                <div class="w-[100%] h-[50%] flex items-center justify-center">
+                                                    <div class="w-[100%] h-[50%] flex items-center justify-center">
+                                                        <h2 class="text-white text-[0.55vw] font-normal font-['Gilroy-SemiBold']">
+                                                            {{PlayerInventoryWeight}}/
+                                                            <span class="text-white text-[0.68vw] font-normal font-['Gilroy-SemiBold']">{{maxWeight}} Kg</span>
+                                                        </h2>
+                                                    </div>
+                                                </div>
+                                                <div class="w-[100%] h-[4%] flex absolute bottom-0">
+                                                    <div class="w-[3%] h-full bg-white"></div>
+                                                    <div class="flex-1 h-[80%] bg-zinc-300 bg-opacity-20"></div>
+                                                    <div class="w-[3%] h-full bg-white"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[57%] flex items-center justify-center">
+                                        <div class="w-[52%] h-full">
+                                            <div class="w-full h-[29%] flex items-end">
+                                                <!-- <div
+                                                    class="w-full h-[38%] bg-zinc-300 bg-opacity-10 rounded-lg border border-white border-opacity-30"
+                                                ></div> -->
+                                            </div>
+                                            <div class="w-full h-[21%] flex items-end justify-center">
+                                                <div class="use-slot-drop w-full cursor-pointer h-[51%] bg-zinc-300 rounded-lg shadow-inner flex items-center justify-center">
+                                                    <h2 class="text-black text-[1vw] font-normal font-['Gilroy-Bold'] leading-tight">{{locales['USE']}}</h2>
+                                                </div>
+                                            </div>
+                                            <!-- <div class="w-full h-[15.5%] flex items-end justify-center">
+                                                <div
+                                                    class="w-full cursor-pointer h-[72%] bg-orange-400 rounded-lg shadow-inner flex items-center justify-center"
+                                                >
+                                                    <h2 class="text-black text-[1vw] font-normal font-['Gilroy-Bold'] leading-tight">GIVE</h2>
+                                                </div>
+                                            </div> -->
+                                            <div class="drop-slot-drop w-full h-[15.5%] flex items-end justify-center">
+                                                <div class="w-full cursor-pointer h-[70%] bg-rose-600 rounded-lg shadow-inner flex items-center justify-center">
+                                                    <h2 class="text-black text-[1vw] font-normal font-['Gilroy-Bold'] leading-tight">{{locales['DROP']}}</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[16.5%] flex items-center relative justify-center z-[105] cursor-pointer">
+                                        <div class="w-[70%] cursor-pointer h-[40%] bg-zinc-300 rounded-lg shadow-inner flex items-center justify-center" @click="changeLayout2()">
+                                            <h2 class="text-black text-[1vw] font-normal font-['Gilroy-Bold'] leading-tight">{{ !layout2Clothes ? locales['CLOTHES'] : locales['INVENTORY'] }}</h2>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-if="!layout2Clothes" class="w-[29.5%] h-full">
+                                    <div class="w-full h-[14.2%] flex flex-wrap content-end items-end">
+                                        <div class="w-full h-[43.5%] flex items-start justify-center">
+                                            <div class="w-[90%] h-[80%] flex">
+                                                <div class="w-[8%] h-full">
+                                                    <img v-if="rightinventory == 'ground'" :src="'./templateimages/svg/'+currentThema+'groundicon.svg'" alt="" />
+                                                    <img v-if="rightinventory == 'vehicle' || rightinventory == 'glovebox'" :src="'./templateimages/svg/'+currentThema+'trunkicon.svg'" alt="" />
+                                                    <img v-if="rightinventory == 'stash'" :src="'./templateimages/svg/'+currentThema+'stashicon.svg'" alt="" />
+                                                    <img v-if="rightinventory == 'backpack'" :src="'./templateimages/svg/'+currentThema+'backpackicon.svg'" alt="" />
+                                                    <img v-if="rightinventory == 'shop'" :src="'./templateimages/svg/'+currentThema+'shopicon.svg'" alt="" />
+                                                    <img v-if="rightinventory == 'player'" :src="'./templateimages/svg/'+currentThema+'playericon.svg'" alt="" />
+                                                </div>
+                                                <div class="w-[50%] h-full flex items-center justify-start">
+                                                    <h2 v-if="rightinventory == 'ground'" :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">
+                                                        {{locales['GROUND']}}
+                                                        <span v-if="rightInventoryData && rightInventoryData.id">#{{rightInventoryData.id}}</span>
+                                                    </h2>
+                                                    <h2 v-if="rightinventory == 'stash'" :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">
+                                                        <span v-if="rightInventoryData && rightInventoryData.label">{{rightInventoryData.label}}</span>
+                                                        {{locales['STASH']}}
+                                                    </h2>
+                                                    <h2 v-if="rightinventory == 'backpack'" :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">
+                                                        <span v-if="rightInventoryData && rightInventoryData.slot">{{locales['BACKPACKSTASH']}}</span>
+                                                    </h2>
+                                                    <h2 v-if="rightinventory == 'vehicle' || rightinventory == 'glovebox'" :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">
+                                                        <span style="text-transform: uppercase" v-if="rightInventoryData && rightInventoryData.plate">{{ rightInventoryData.plate }} {{ rightinventory == 'glovebox' ? locales['GLOVEBOX'] : locales['TRUNK'] }}</span>
+                                                    </h2>
+                                                    <h2 v-if="rightinventory == 'shop'" :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">
+                                                        <span style="text-transform: uppercase" v-if="rightInventoryData && rightInventoryData.shoplabel">{{rightInventoryData.shoplabel ? rightInventoryData.shoplabel : locales['SHOP']}}</span>
+                                                    </h2>
+                                                    <h2 v-if="rightinventory == 'player'" :class="currentThema+'text'" class="ml-[1vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">
+                                                        <span style="text-transform: uppercase" v-if="rightInventoryData && rightInventoryData.playername">{{ rightInventoryData.playername ? rightInventoryData.playername + ' ' + locales['INVENTORY'] : 'UNKNOWN' }}</span>
+                                                    </h2>
+                                                </div>
+                                                <div class="w-[44%] h-full flex items-center justify-end relative">
+                                                    <div class="w-[18%] absolute z-[104] left-[6vw] h-full cursor-pointer flex items-center justify-center bg-zinc-300 bg-opacity-5 rounded" @click="sortItemStash">
+                                                        <img class="w-[50%] h-[50%] flex items-center justify-center" src="./templateimages/svg/sorticon.svg" alt="" />
+                                                    </div>
+                                                    <h2 v-if="rightinventory == 'stash'" class="text-white mr-[-1.25vw] text-[0.6vw] font-normal font-['Gilroy-SemiBold'] leading-[9.95px]">
+                                                        {{rightInventoryWeight}} /
+                                                        <span class="text-white text-[0.7vw] font-normal font-['Gilroy-SemiBold'] leading-3" v-if="rightInventoryData && rightInventoryData.maxweight">{{rightInventoryData.maxweight / 1000}}Kg</span>
+                                                    </h2>
+                                                    <h2 v-if="rightinventory == 'vehicle' || rightinventory == 'glovebox'" class="text-white mr-[-1.25vw] text-[0.6vw] font-normal font-['Gilroy-SemiBold'] leading-[9.95px]">
+                                                        {{rightInventoryWeight}} /
+                                                        <span class="text-white text-[0.7vw] font-normal font-['Gilroy-SemiBold'] leading-3" v-if="rightInventoryData && rightInventoryData.maxweight">{{rightInventoryData.maxweight / 1000}}Kg</span>
+                                                    </h2>
+
+                                                    <h2 v-if="rightinventory == 'backpack'" class="text-white mr-[-1.25vw] text-[0.6vw] font-normal font-['Gilroy-SemiBold'] leading-[9.95px]">
+                                                        {{rightInventoryWeight}} /
+                                                        <span class="text-white text-[0.7vw] font-normal font-['Gilroy-SemiBold'] leading-3" v-if="rightInventoryData && rightInventoryData.maxweight">{{rightInventoryData.maxweight / 1000}}Kg</span>
+                                                    </h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="w-full h-[26%]">
+                                            <div v-if="rightinventory == 'shop'" class="w-full h-full flex justify-between">
+                                                <div class="w-[25%] ml-[1.4vw] relative flex items-center z-[50] cursor-pointer bg-zinc-300 bg-opacity-5 justify-center h-full rounded">
+                                                    <input type="text" placeholder="Choose Amount" class="w-full h-full text-white text-[0.6vw] font-normal font-['Gilroy-Bold'] indent-[0.5vw]" style="border: none; outline: none; background-color: transparent" v-model="shopAmount" @input="checkInputMin" />
+                                                </div>
+                                                <div class="w-[40%] h-full flex">
+                                                    <div class="w-[40%] h-full flex items-center relative z-[105] justify-center rounded-[0.3vw] cursor-pointer" @click="changePaymentMethod('cash')" :class="paymentMethod == 'cash' ?  currentThema+'durabilitybar' : ''">
+                                                        <h2 :class="currentThema == 'white' && paymentMethod == 'cash' ? 'text-black' : 'text-white '" class="text-[0.6vw] font-normal font-['Gilroy-SemiBold']">Cash</h2>
+                                                    </div>
+                                                    <div class="w-[40%] h-full flex items-center relative z-[105] justify-center rounded-[0.3vw] cursor-pointer" @click="changePaymentMethod('bank')" :class="paymentMethod == 'bank' ?  currentThema+'durabilitybar' : ''">
+                                                        <h2 :class="currentThema == 'white' && paymentMethod == 'bank' ? 'text-black' : 'text-white '" class="text-[0.6vw] font-normal font-['Gilroy-SemiBold']">Bank</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-[86%] flex justify-end">
+                                        <div class="w-[97%] h-full flex flex-wrap overflow-auto content-start" id="layout1">
+                                            <div v-if="rightinventory == 'ground'" v-for="index in groundslot" :data-slotnumber="index" :data-item=" JSON.stringify(rightinventoryItems[index] ? rightinventoryItems[index] : null)" @mouseleave="handleMouseLeaveHoverItem()" @mouseover="handleMouseOverHoverItem($event, rightinventoryItems[index]  ? rightinventoryItems[index]  : null)" class="w-[18.5%] ml-[0.3vw] flex items-center cursor-pointer justify-center ground-inventory-drag-slot ground-inventory-drop-slot relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                                <template v-if="rightinventoryItems[index]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{rightinventoryItems[index].amount}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightinventoryItems[index].image+''" alt="" />
+                                                    </div>
+                                                </template>
+                                            </div>
+
+                                            <div v-if="rightinventory == 'stash' && rightInventoryData && rightInventoryData.slot" v-for="index in rightInventoryData.slot" :data-slotnumber="index" :data-item=" JSON.stringify(rightinventoryItems[index] ? rightinventoryItems[index] : null)" @contextmenu.prevent="handleRightClick( $event, rightinventoryItems[index], 'stash' )" @mouseleave="handleMouseLeaveHoverItem()" @mouseover="handleMouseOverHoverItem($event, rightinventoryItems[index]  ? rightinventoryItems[index]  : null)" class="w-[18.5%] ml-[0.3vw] flex items-center cursor-pointer justify-center stash-inventory-drag-slot stash-inventory-drop-slot relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                                <template v-if="rightinventoryItems[index]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{rightinventoryItems[index].amount}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightinventoryItems[index].image+''" alt="" />
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div v-if="rightinventory == 'vehicle' && rightInventoryData && rightInventoryData.slot" v-for="index in rightInventoryData.slot" :data-slotnumber="index" :data-item=" JSON.stringify(rightinventoryItems[index] ? rightinventoryItems[index] : null)" @mouseleave="handleMouseLeaveHoverItem()" @contextmenu.prevent="handleRightClick( $event, rightinventoryItems[index], 'trunk' )" @mouseover="handleMouseOverHoverItem($event, rightinventoryItems[index]  ? rightinventoryItems[index]  : null)" class="w-[18.5%] ml-[0.3vw] flex items-center cursor-pointer justify-center trunk-inventory-drag-slot trunk-inventory-drop-slot relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                                <template v-if="rightinventoryItems[index]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{rightinventoryItems[index].amount}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightinventoryItems[index].image+''" alt="" />
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div v-if="rightinventory == 'glovebox' && rightInventoryData && rightInventoryData.slot" @contextmenu.prevent="handleRightClick( $event, rightinventoryItems[index], 'glovebox' )" v-for="index in rightInventoryData.slot" :data-slotnumber="index" :data-item=" JSON.stringify(rightinventoryItems[index] ? rightinventoryItems[index] : null)" @mouseleave="handleMouseLeaveHoverItem()" @mouseover="handleMouseOverHoverItem($event, rightinventoryItems[index]  ? rightinventoryItems[index]  : null)" class="w-[18.5%] ml-[0.3vw] flex items-center cursor-pointer justify-center glovebox-inventory-drag-slot glovebox-inventory-drop-slot relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                                <template v-if="rightinventoryItems[index]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{rightinventoryItems[index].amount}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightinventoryItems[index].image+''" alt="" />
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div v-if="rightinventory == 'shop' && rightInventoryData" v-for="(data , index ,key) in Object.values(rightInventoryData.inventory)" :data-item=" JSON.stringify(rightInventoryData.inventory[index + 1] ? rightInventoryData.inventory[index + 1] : null)" @mouseleave="handleMouseLeaveHoverItem()" @mouseover="handleMouseOverHoverItem($event, rightInventoryData.inventory[index +1 ]  ? rightInventoryData.inventory[index +1]  : null)" class="w-[18.5%] ml-[0.3vw] flex items-center cursor-pointer justify-center shop-inventory-drag-slot relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(78.26% 78.26% at 39.13% 39.13%, rgba(51, 255, 125.8, 0.2) 0%, rgba(51, 255, 125.8, 0.2) 100%)">
+                                                <template v-if="rightInventoryData.inventory[index + 1]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-[#33FF7E] text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium']">$ {{rightInventoryData.inventory[index + 1].price}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightInventoryData.inventory[index + 1].name+'.png'" alt="" />
+                                                    </div>
+                                                    <div class="w-full h-[20%] absolute bottom-0 bg-white bg-opacity-10 flex items-center justify-center">
+                                                        <h2 class="text-white text-[0.6vw] font-normal font-['Gilroy-Medium']" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{rightInventoryData.inventory[index + 1].label}}</h2>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div v-if="rightinventory == 'backpack' && rightInventoryData && rightInventoryData.slot" v-for="(data , index) in rightInventoryData.slot" :data-slotnumber="index" :data-item=" JSON.stringify(rightInventoryData.inventory[index + 1 ] ? rightInventoryData.inventory[index + 1] : null)" @mouseleave="handleMouseLeaveHoverItem()" @mouseover="handleMouseOverHoverItem($event, rightInventoryData.inventory[index + 1]  ? rightInventoryData.inventory[index + 1]  : null)" class="w-[18.5%] ml-[0.3vw] flex items-center cursor-pointer justify-center backpack-inventory-drag-drop backpack-inventory-drag-slot relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                                <template v-if="rightInventoryData.inventory[index + 1]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium']">x{{rightInventoryData.inventory[index + 1 ].amount}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightInventoryData.inventory[index + 1].name+'.png'" alt="" />
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div v-if="rightinventory == 'player' " v-for="index in maxSlot" :data-slotnumber="index" :data-item="JSON.stringify(rightinventoryItems[index] ? rightinventoryItems[index] : null)" @mouseleave="handleMouseLeaveHoverItem()" @mouseover="handleMouseOverHoverItem($event, rightinventoryItems[index]  ? rightinventoryItems[index]  : null)" class="rob-player-inventory-slot rob-player-inventory-slot-drop w-[18.5%] ml-[0.3vw] flex items-center justify-center relative mt-[1vh] h-[13%] rounded-[0.2vw]" style="background: radial-gradient(63.89% 63.89% at 50% 50%, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)">
+                                                <template v-if="rightinventoryItems[index]">
+                                                    <div class="w-[90%] h-[20%] absolute flex items-center justify-end top-0">
+                                                        <h2 class="text-white text-opacity-50 text-[0.55vw] font-normal font-['Gilroy-Medium'] leading-[10.94px]">{{rightinventoryItems[index].amount.toLocaleString()}}</h2>
+                                                    </div>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+rightinventoryItems[index].image+''" alt="" />
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-else class="w-[29.5%] h-full flex justify-end relative z-[105]">
+                                    <div class="w-[45%] h-full">
+                                        <div class="w-full h-[6%]"></div>
+                                        <div class="w-full h-[13.5%] flex justify-between">
+                                            <div class="w-[1%] h-full bg-white rounded-[7px]"></div>
+                                            <div class="w-[93%] h-full flex flex-col justify-between">
+                                                <h2 class="text-white text-[0.8vw] font-normal font-['Gilroy-Black']">{{playerInfo.name}}</h2>
+                                                <h2 class="text-white text-[0.8vw] font-normal font-['Gilroy-Black']">ID - #{{playerInfo.id}}</h2>
+                                                <h2 class="text-[#B4FF90] text-[0.8vw] font-normal font-['Gilroy-Black']">Cash - {{status.cash}}</h2>
+                                                <h2 class="text-[#90DAFF] text-[0.8vw] font-normal font-['Gilroy-Black']">Bank - {{status.bank}}</h2>
+                                            </div>
+                                        </div>
+                                        <div class="w-[90%] h-[80%] flex items-center justify-between flex-wrap">
+                                            <div v-if="!configClothing" v-for="data in clothesIconData" @click="SetClothes(data.name)" :key="data.name" class="w-[45%] h-[12%] bg-zinc-300 bg-opacity-20 rounded-[3px]">
+                                                <inlinesvg class="h-[100%] cursor-pointer w-[100%] flex items-center justify-center" :src="'./templateimages/svg/'+data.icon+'.svg'"></inlinesvg>
+                                            </div>
+                                            <div v-if="configClothing" v-for="(data,index) in clothesIconData" :key="data.name" class="w-[45%] relative z-[105] cursor-pointer h-[12%] clothes-slot-drag clothes-slot-drop bg-zinc-300 bg-opacity-20 rounded-[3px]" :data-item="JSON.stringify(ClothingInventory[data.itemname] ? ClothingInventory[data.itemname] : null)" @dblclick="takeoffclothes(ClothingInventory[data.itemname] ? ClothingInventory[data.itemname] : null)">
+                                                <template v-if="ClothingInventory[data.itemname]">
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <img class="h-[60%]" style="object-fit: cover" :src="'./itemimages/'+ClothingInventory[data.itemname].image+''" alt="" />
+                                                    </div>
+                                                </template>
+                                                <div v-else class="w-full h-full">
+                                                    <inlinesvg class="h-[100%] cursor-pointer w-[100%] flex items-center justify-center" :src="'./templateimages/svg/'+data.icon+'.svg'"></inlinesvg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full h-[12%] flex items-center justify-center">
+                                <div class="w-[76%] h-full flex">
+                                    <div class="w-[38%] h-full flex items-end justify-end">
+                                        <div v-if="infoonbottomvalue && infoonbottomItem" class="w-[98.5%] h-[80%] flex bg-zinc-300 justify-between bg-opacity-10 rounded">
+                                            <div class="w-[20%] h-full flex items-center justify-end">
+                                                <div class="w-[80%] h-[80%] bg-zinc-300 flex items-center justify-center bg-opacity-20 rounded-[0.15vw]">
+                                                    <img class="h-[70%]" style="object-fit: cover" :src="'./itemimages/'+infoonbottomItem.item.image+''" alt="" />
+                                                </div>
+                                            </div>
+                                            <div class="w-[78%] h-full">
+                                                <div class="w-[95%] h-[35%] flex items-end justify-between">
+                                                    <h2 class="text-white text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">{{infoonbottomItem.item.label}}</h2>
+                                                    <h2 class="text-white text-xs font-normal font-['Gilroy-SemiBold']">{{(infoonbottomItem.item.amount * infoonbottomItem.item.weight) / 1000}}kg x{{infoonbottomItem.item.amount}}</h2>
+                                                </div>
+                                                <div class="w-[95%] h-[55%] flex items-center">
+                                                    <h2 class="text-white text-opacity-20 text-[13px] font-normal font-['Gilroy-SemiBold'] leading-[12.93px]">{{infoonbottomItem.item.description}}</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-[44.4%] h-full">
+                                        <div class="w-[95.5%] h-full flex items-end justify-start">
+                                            <div class="w-[70.5%] h-[80%] flex items-end justify-end relative">
+                                                <div class="w-[93%] h-full relative">
+                                                    <transition-group name="fade">
+                                                        <div v-if="notifications.length > 0" v-for="(notification, index) in notifications" :key="notification.id" :style="{'bottom': `${0 + (index * 10)}vh`}" class="w-full h-full absolute bg-zinc-300 bg-opacity-10 rounded">
+                                                            <div class="w-full h-[35%] flex items-end">
+                                                                <h2 class="text-white ml-[0.5vw] text-[0.9vw] font-normal font-['Gilroy-Black'] leading-none">{{locales['NOTIFICATION']}}</h2>
+                                                            </div>
+                                                            <div class="w-full h-[65%] flex items-center justify-center">
+                                                                <div class="w-[96%] h-full flex items-center">
+                                                                    <h2 class="text-white text-opacity-20 text-[0.7vw] font-normal font-['Gilroy-SemiBold'] leading-[12.93px]">{{ notification.text }}</h2>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </transition-group>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-[17%] h-full">
+                                        <div v-if="allowedCraft" class="w-full h-[32%] mt-[2.3vh] bg-zinc-300 bg-opacity-20 rounded flex items-center justify-center cursor-pointer" @click="OpenCraftPage">
+                                            <h2 class="text-white text-[0.8vw] font-normal font-['Gilroy-Bold'] leading-[13.93px]">{{locales['CRAFTBUTTON']}}</h2>
+                                        </div>
+                                        <div class="w-full h-[32%] mt-[1.3vh] bg-zinc-300 bg-opacity-20 rounded flex items-center justify-center" @click="openSettingsModal(true)">
+                                            <h2 class="text-white text-[0.8vw] font-normal font-['Gilroy-Bold'] leading-[13.93px]">{{locales['SETTINGS']}}</h2>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.1.1/howler.min.js" type="text/javascript"></script>
+        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+        <script src="./js/app.js" type="module"></script>
+    </body>
+</html>
